@@ -109,6 +109,7 @@ const els = {
   routeSubtitle: document.querySelector("#routeSubtitle"),
   routeList: document.querySelector("#routeList"),
   profileName: document.querySelector("#profileName"),
+  profileButton: document.querySelector("#profileButton"),
   profileNameInput: document.querySelector("#profileNameInput"),
   profileForm: document.querySelector("#profileForm"),
   profileStats: document.querySelector("#profileStats"),
@@ -210,6 +211,7 @@ function switchView(viewName) {
   if (viewName === "history") renderHistory();
   if (viewName === "saved") renderSaved();
   if (viewName === "profile") renderProfile();
+  window.scrollTo(0, 0);
 }
 
 function recordScan(product) {
@@ -712,6 +714,7 @@ function productListCard(product, source) {
 
 function renderProfile() {
   els.profileName.textContent = profile.name;
+  els.profileButton.title = `Profile: ${profile.name}`;
   els.profileNameInput.value = profile.name;
   els.profileStats.innerHTML = `
     <article class="profile-card">

@@ -8,9 +8,8 @@
   </head>
   <body>
     <header class="app-nav">
-      <div>
-        <p class="eyebrow">PriceScout</p>
-        <strong id="profileName">My profile</strong>
+      <div class="brand-mark">
+        <strong>PriceScout</strong>
       </div>
       <nav aria-label="Primary">
         <button class="nav-btn active" type="button" data-view-target="scan">Scan</button>
@@ -19,6 +18,9 @@
         <button class="nav-btn" type="button" data-view-target="saved">Saved</button>
         <button class="nav-btn" type="button" data-view-target="profile">Profile</button>
       </nav>
+      <button id="profileButton" class="profile-pill" type="button" data-view-target="profile">
+        <span id="profileName">My profile</span>
+      </button>
     </header>
 
     <main class="app-shell app-view active" data-view="scan">

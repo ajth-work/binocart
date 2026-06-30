@@ -42,13 +42,13 @@ button {
   position: sticky;
   top: 0;
   z-index: 20;
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
   gap: 16px;
   align-items: center;
   width: min(1280px, 100%);
   margin: 0 auto;
-  padding: 14px 20px 0;
+  padding: 14px 20px 10px;
   background: linear-gradient(180deg, rgba(16, 19, 24, 0.98), rgba(16, 19, 24, 0.82));
   backdrop-filter: blur(14px);
 }
@@ -57,6 +57,30 @@ button {
 .bottom-nav {
   display: flex;
   gap: 6px;
+}
+
+.app-nav nav {
+  justify-content: center;
+}
+
+.brand-mark strong {
+  display: block;
+  font-size: 1.05rem;
+  letter-spacing: 0;
+}
+
+.profile-pill {
+  min-height: 38px;
+  max-width: 180px;
+  padding: 0 12px;
+  border: 1px solid rgba(154, 167, 184, 0.24);
+  border-radius: 999px;
+  background: rgba(82, 168, 255, 0.1);
+  color: var(--text);
+  font-weight: 900;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .nav-btn {
@@ -899,11 +923,18 @@ h3 {
   }
 
   .app-nav {
-    padding: 10px 12px 0;
+    grid-template-columns: minmax(0, 1fr) auto;
+    padding: 12px 12px 10px;
+    border-bottom: 1px solid rgba(154, 167, 184, 0.14);
   }
 
   .app-nav nav {
     display: none;
+  }
+
+  .profile-pill {
+    max-width: 136px;
+    min-height: 40px;
   }
 
   .bottom-nav {
