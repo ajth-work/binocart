@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PriceScout - Lists</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body data-page="list">
+    <header class="app-nav">
+      <a class="brand-mark" href="index.html"><strong>PriceScout</strong></a>
+      <nav aria-label="Primary">
+        <a class="nav-btn" href="index.html">Scan</a>
+        <a class="nav-btn active" href="list.html">List</a>
+        <a class="nav-btn" href="history.html">History</a>
+        <a class="nav-btn" href="saved.html">Saved</a>
+        <a class="nav-btn" href="profile.html">Profile</a>
+      </nav>
+      <a id="profileButton" class="profile-pill" href="profile.html"><span id="profileName">My profile</span></a>
+    </header>
+
+    <main class="app-page">
+      <header class="page-heading">
+        <div>
+          <p class="eyebrow">Lists</p>
+          <h1>Grouped grocery planning</h1>
+        </div>
+        <button id="newGroupQuick" class="small-action" type="button">New group</button>
+      </header>
+      <div id="groupCards" class="group-cards"></div>
+    </main>
+
+    <nav class="bottom-nav" aria-label="Primary mobile">
+      <a class="nav-btn" href="index.html">Scan</a>
+      <a class="nav-btn active" href="list.html">List</a>
+      <a class="nav-btn" href="history.html">History</a>
+      <a class="nav-btn" href="saved.html">Saved</a>
+      <a class="nav-btn" href="profile.html">Profile</a>
+    </nav>
+    <script src="pages.js"></script>
+  </body>
+</html>

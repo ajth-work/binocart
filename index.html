@@ -3,27 +3,25 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>PriceScout</title>
+    <title>PriceScout - Scan</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
-  <body>
+  <body data-page="scan">
     <header class="app-nav">
-      <div class="brand-mark">
-        <strong>PriceScout</strong>
-      </div>
+      <a class="brand-mark" href="index.html"><strong>PriceScout</strong></a>
       <nav aria-label="Primary">
-        <button class="nav-btn active" type="button" data-view-target="scan">Scan</button>
-        <button class="nav-btn" type="button" data-view-target="list">List</button>
-        <button class="nav-btn" type="button" data-view-target="history">History</button>
-        <button class="nav-btn" type="button" data-view-target="saved">Saved</button>
-        <button class="nav-btn" type="button" data-view-target="profile">Profile</button>
+        <a class="nav-btn active" href="index.html">Scan</a>
+        <a class="nav-btn" href="list.html">List</a>
+        <a class="nav-btn" href="history.html">History</a>
+        <a class="nav-btn" href="saved.html">Saved</a>
+        <a class="nav-btn" href="profile.html">Profile</a>
       </nav>
-      <button id="profileButton" class="profile-pill" type="button" data-view-target="profile">
+      <a id="profileButton" class="profile-pill" href="profile.html">
         <span id="profileName">My profile</span>
-      </button>
+      </a>
     </header>
 
-    <main class="app-shell app-view active" data-view="scan">
+    <main class="app-shell">
       <section class="scanner-pane" aria-label="Barcode scanner">
         <header class="topbar">
           <div>
@@ -80,7 +78,7 @@
 
         <section class="basket-panel" aria-label="Grocery list">
           <div class="section-heading">
-            <h3>Grocery list</h3>
+            <h3>Active list</h3>
             <span id="basketCount">0 items</span>
           </div>
           <form id="groupForm" class="group-form" autocomplete="off">
@@ -212,62 +210,12 @@
       </section>
     </main>
 
-    <section class="app-view app-page" data-view="list">
-      <header class="page-heading">
-        <div>
-          <p class="eyebrow">Lists</p>
-          <h2>Grouped grocery planning</h2>
-        </div>
-        <button id="newGroupQuick" class="small-action" type="button">New group</button>
-      </header>
-      <div id="groupCards" class="group-cards"></div>
-    </section>
-
-    <section class="app-view app-page" data-view="history">
-      <header class="page-heading">
-        <div>
-          <p class="eyebrow">History</p>
-          <h2>Recent scans</h2>
-        </div>
-        <button id="clearHistory" class="ghost-btn" type="button">Clear history</button>
-      </header>
-      <div id="historyList" class="history-list"></div>
-    </section>
-
-    <section class="app-view app-page" data-view="saved">
-      <header class="page-heading">
-        <div>
-          <p class="eyebrow">Saved</p>
-          <h2>Favorites and usual carts</h2>
-        </div>
-        <button id="saveCurrent" class="small-action" type="button">Save current</button>
-      </header>
-      <div id="savedList" class="history-list"></div>
-    </section>
-
-    <section class="app-view app-page" data-view="profile">
-      <header class="page-heading">
-        <div>
-          <p class="eyebrow">Profile</p>
-          <h2>Local profile</h2>
-        </div>
-      </header>
-      <form id="profileForm" class="profile-form" autocomplete="off">
-        <label for="profileNameInput">Profile name</label>
-        <div class="lookup-row">
-          <input id="profileNameInput" type="text" placeholder="My profile" />
-          <button type="submit">Save</button>
-        </div>
-      </form>
-      <div id="profileStats" class="profile-stats"></div>
-    </section>
-
     <nav class="bottom-nav" aria-label="Primary mobile">
-      <button class="nav-btn active" type="button" data-view-target="scan">Scan</button>
-      <button class="nav-btn" type="button" data-view-target="list">List</button>
-      <button class="nav-btn" type="button" data-view-target="history">History</button>
-      <button class="nav-btn" type="button" data-view-target="saved">Saved</button>
-      <button class="nav-btn" type="button" data-view-target="profile">Profile</button>
+      <a class="nav-btn active" href="index.html">Scan</a>
+      <a class="nav-btn" href="list.html">List</a>
+      <a class="nav-btn" href="history.html">History</a>
+      <a class="nav-btn" href="saved.html">Saved</a>
+      <a class="nav-btn" href="profile.html">Profile</a>
     </nav>
 
     <script src="app.js"></script>

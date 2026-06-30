@@ -636,6 +636,7 @@ function renderBasket() {
 }
 
 function renderGroupSelect() {
+  if (!els.groupSelect) return;
   els.groupSelect.innerHTML = profile.groups.map((group) => `
     <option value="${group.id}" ${group.id === profile.activeGroupId ? "selected" : ""}>${group.name}</option>
   `).join("");
@@ -654,6 +655,7 @@ function createGroup(name) {
 }
 
 function renderGroupCards() {
+  if (!els.groupCards) return;
   els.groupCards.innerHTML = profile.groups.map((group) => {
     const pricedItems = group.items.filter(hasPriceProfile);
     const total = pricedItems.reduce((sum, product) => sum + (bestStore(product)?.price || 0), 0);
@@ -685,12 +687,14 @@ function renderGroupCards() {
 }
 
 function renderHistory() {
+  if (!els.historyList) return;
   els.historyList.innerHTML = profile.history.length
     ? profile.history.map((product) => productListCard(product, "history")).join("")
     : `<div class="basket-empty">Scanned products will appear here automatically.</div>`;
 }
 
 function renderSaved() {
+  if (!els.savedList) return;
   els.savedList.innerHTML = profile.saved.length
     ? profile.saved.map((product) => productListCard(product, "saved")).join("")
     : `<div class="basket-empty">Save products you buy often, then add them back to a list quickly.</div>`;
@@ -719,9 +723,10 @@ function productListCard(product, source) {
 }
 
 function renderProfile() {
-  els.profileName.textContent = profile.name;
-  els.profileButton.title = `Profile: ${profile.name}`;
-  els.profileNameInput.value = profile.name;
+  if (els.profileName) els.profileName.textContent = profile.name;
+  if (els.profileButton) els.profileButton.title = `Profile: ${profile.name}`;
+  if (els.profileNameInput) els.profileNameInput.value = profile.name;
+  if (!els.profileStats) return;
   els.profileStats.innerHTML = `
     <article class="profile-card">
       <strong>${profile.name}</strong>
@@ -848,85 +853,85 @@ function stopCamera() {
   }
 }
 
-els.startCamera.addEventListener("click", startCamera);
-els.stopCamera.addEventListener("click", stopCamera);
-els.toggleTorch.addEventListener("click", () => setTorch(!torchOn));
-els.demoScan.addEventListener("click", () => lookup("04963406"));
-els.lookupForm.addEventListener("submit", (event) => {
+els.startCamera?.addEventListener("click", startCamera);
+els.stopCamera?.addEventListener("click", stopCamera);
+els.toggleTorch?.addEventListener("click", () => setTorch(!torchOn));
+els.demoScan?.addEventListener("click", () => lookup("04963406"));
+els.lookupForm?.addEventListener("submit", (event) => {
   event.preventDefault();
   lookup(els.upcInput.value);
 });
-els.sortStores.addEventListener("click", () => {
+els.sortStores?.addEventListener("click", () => {
   sortAscending = !sortAscending;
   els.sortStores.textContent = sortAscending ? "Sort by price" : "Sort by store";
   if (currentProduct) renderStores(currentProduct);
 });
-els.addToBasket.addEventListener("click", () => {
+els.addToBasket?.addEventListener("click", () => {
   if (currentProduct) addProductToBasket(currentProduct);
 });
-els.saveProduct.addEventListener("click", () => {
+els.saveProduct?.addEventListener("click", () => {
   saveProduct(currentProduct);
 });
-els.seedBasket.addEventListener("click", () => {
+els.seedBasket?.addEventListener("click", () => {
   activeGroup().items = Object.values(products).map(productSnapshot);
   basket = activeGroup().items;
   saveProfile();
   renderBasket();
   renderGroupCards();
 });
-els.clearBasket.addEventListener("click", () => {
+els.clearBasket?.addEventListener("click", () => {
   activeGroup().items = [];
   basket = activeGroup().items;
   saveProfile();
   renderBasket();
   renderGroupCards();
 });
-els.basketList.addEventListener("click", (event) => {
+els.basketList?.addEventListener("click", (event) => {
   const button = event.target.closest("[data-remove]");
   if (button) removeProductFromBasket(button.dataset.remove);
 });
-els.singleStoreMode.addEventListener("click", () => {
+els.singleStoreMode?.addEventListener("click", () => {
   optimizerMode = "single";
   renderOptimizer();
 });
-els.multiStoreMode.addEventListener("click", () => {
+els.multiStoreMode?.addEventListener("click", () => {
   optimizerMode = "multi";
   renderOptimizer();
 });
 els.navButtons.forEach((button) => {
   button.addEventListener("click", () => switchView(button.dataset.viewTarget));
 });
-els.groupSelect.addEventListener("change", () => {
+els.groupSelect?.addEventListener("change", () => {
   profile.activeGroupId = els.groupSelect.value;
   basket = activeGroup().items;
   saveProfile();
   renderBasket();
 });
-els.groupForm.addEventListener("submit", (event) => {
+els.groupForm?.addEventListener("submit", (event) => {
   event.preventDefault();
   createGroup(els.groupNameInput.value);
   els.groupNameInput.value = "";
 });
-els.newGroupQuick.addEventListener("click", () => {
+els.newGroupQuick?.addEventListener("click", () => {
   createGroup("New list");
   switchView("list");
 });
-els.profileForm.addEventListener("submit", (event) => {
+els.profileForm?.addEventListener("submit", (event) => {
   event.preventDefault();
   profile.name = els.profileNameInput.value.trim() || "My profile";
   saveProfile();
   renderProfile();
 });
-els.clearHistory.addEventListener("click", () => {
+els.clearHistory?.addEventListener("click", () => {
   profile.history = [];
   saveProfile();
   renderHistory();
   renderProfile();
 });
-els.saveCurrent.addEventListener("click", () => {
+els.saveCurrent?.addEventListener("click", () => {
   saveProduct(currentProduct);
 });
-els.groupCards.addEventListener("click", (event) => {
+els.groupCards?.addEventListener("click", (event) => {
   const openButton = event.target.closest("[data-open-group]");
   const seedButton = event.target.closest("[data-seed-group]");
   if (openButton) {
@@ -959,16 +964,25 @@ function handleProductListAction(event) {
     if (product) addProductToBasket(product);
   }
 }
-els.historyList.addEventListener("click", handleProductListAction);
-els.savedList.addEventListener("click", handleProductListAction);
+els.historyList?.addEventListener("click", handleProductListAction);
+els.savedList?.addEventListener("click", handleProductListAction);
 document.querySelectorAll("[data-code]").forEach((button) => {
   button.addEventListener("click", () => lookup(button.dataset.code));
 });
 
 loadProfile();
+const initialParams = new URLSearchParams(window.location.search);
+const initialGroup = initialParams.get("group");
+if (initialGroup && profile.groups.some((group) => group.id === initialGroup)) {
+  profile.activeGroupId = initialGroup;
+  basket = activeGroup().items;
+  saveProfile();
+}
 renderBasket();
 renderHistory();
 renderSaved();
 renderProfile();
 updateTorchButton();
 setMode("empty");
+const initialLookup = initialParams.get("lookup");
+if (initialLookup) lookup(initialLookup);
