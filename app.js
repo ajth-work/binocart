@@ -67,6 +67,7 @@ const els = {
   scanLine: document.querySelector("#scanLine"),
   startCamera: document.querySelector("#startCamera"),
   stopCamera: document.querySelector("#stopCamera"),
+  toggleTorch: document.querySelector("#toggleTorch"),
   demoScan: document.querySelector("#demoScan"),
   lookupForm: document.querySelector("#lookupForm"),
   upcInput: document.querySelector("#upcInput"),
@@ -109,6 +110,8 @@ const els = {
 let stream = null;
 let detector = null;
 let scanning = false;
+let torchOn = false;
+let torchSupported = false;
 let currentProduct = null;
 let sortAscending = true;
 let basket = [];
@@ -139,6 +142,56 @@ function showCameraNotice(title, copy) {
 function clearCameraNotice() {
   els.cameraNotice.textContent = "";
   els.cameraNotice.classList.add("hidden");
+}
+
+function cameraTrack() {
+  return stream?.getVideoTracks?.()[0] || null;
+}
+
+function updateTorchButton() {
+  els.toggleTorch.disabled = !stream || !torchSupported;
+  els.toggleTorch.classList.toggle("active", torchOn);
+  els.toggleTorch.textContent = torchOn ? "Lit" : "Light";
+}
+
+function setupTorchControl() {
+  const track = cameraTrack();
+  const capabilities = track?.getCapabilities?.() || {};
+  torchSupported = Boolean(capabilities.torch);
+  torchOn = false;
+  updateTorchButton();
+
+  if (!torchSupported && stream) {
+    showCameraNotice(
+      "Flashlight unavailable",
+      "This camera or browser did not expose torch control. Scanning still works."
+    );
+  }
+}
+
+async function setTorch(enabled) {
+  const track = cameraTrack();
+  if (!track || !torchSupported) {
+    showCameraNotice(
+      "Flashlight unavailable",
+      "This device did not expose torch control for the active camera."
+    );
+    return;
+  }
+
+  try {
+    await track.applyConstraints({ advanced: [{ torch: enabled }] });
+    torchOn = enabled;
+    updateTorchButton();
+  } catch (error) {
+    torchOn = false;
+    torchSupported = false;
+    updateTorchButton();
+    showCameraNotice(
+      "Flashlight unavailable",
+      "The browser blocked torch control for this camera session."
+    );
+  }
 }
 
 function bestStore(product) {
@@ -405,6 +458,7 @@ async function startCamera() {
     els.video.classList.add("is-live");
     scanning = true;
     els.scanLine.classList.add("active");
+    setupTorchControl();
 
     if (!("BarcodeDetector" in window)) {
       showCameraNotice(
@@ -447,6 +501,9 @@ async function detectLoop() {
 
 function stopCamera() {
   scanning = false;
+  torchOn = false;
+  torchSupported = false;
+  updateTorchButton();
   clearCameraNotice();
   els.scanLine.classList.remove("active");
   els.video.classList.remove("is-live");
@@ -458,6 +515,7 @@ function stopCamera() {
 
 els.startCamera.addEventListener("click", startCamera);
 els.stopCamera.addEventListener("click", stopCamera);
+els.toggleTorch.addEventListener("click", () => setTorch(!torchOn));
 els.demoScan.addEventListener("click", () => lookup("04963406"));
 els.lookupForm.addEventListener("submit", (event) => {
   event.preventDefault();
