@@ -269,27 +269,99 @@ async function fetchOpenFoodFactsProduct(code) {
     "image_front_url",
     "image_url"
   ].join(",");
-  const url = `https://world.openfoodfacts.org/api/v3/product/${code}.json?fields=${fields}`;
+  const candidates = barcodeCandidates(code);
 
-  try {
-    const response = await fetch(url);
-    if (!response.ok) return null;
-    const data = await response.json();
-    if (data.status !== "success" || !data.product) return null;
+  for (const candidate of candidates) {
+    const urls = [
+      `https://world.openfoodfacts.org/api/v3/product/${candidate}.json?fields=${fields}`,
+      `https://us.openfoodfacts.org/api/v3/product/${candidate}.json?fields=${fields}`
+    ];
 
-    const product = data.product;
-    return {
-      upc: product.code || code,
-      name: product.product_name || "Unknown product",
-      brand: product.brands || "Brand unavailable",
-      size: product.quantity || "Size unavailable",
-      category: (product.categories || "Product").split(",")[0].trim(),
-      imageUrl: product.image_front_url || product.image_url || "",
-      source: "Open Food Facts"
-    };
-  } catch (error) {
-    return null;
+    for (const url of urls) {
+      try {
+        const response = await fetch(url);
+        if (!response.ok) continue;
+        const data = await response.json();
+        if (data.status !== "success" || !data.product) continue;
+
+        const product = data.product;
+        return {
+          upc: product.code || candidate,
+          name: product.product_name || "Unknown product",
+          brand: product.brands || "Brand unavailable",
+          size: product.quantity || "Size unavailable",
+          category: (product.categories || "Product").split(",")[0].trim(),
+          imageUrl: product.image_front_url || product.image_url || "",
+          source: "Open Food Facts"
+        };
+      } catch (error) {
+        continue;
+      }
+    }
   }
+
+  return null;
+}
+
+function barcodeCandidates(code) {
+  const raw = String(code).replace(/\D/g, "");
+  const candidates = new Set([raw]);
+  if (raw.length === 13 && raw.startsWith("0")) candidates.add(raw.slice(1));
+  if (raw.length === 12) candidates.add(`0${raw}`);
+  if (raw.length < 12) candidates.add(raw.padStart(12, "0"));
+  return [...candidates].filter((candidate) => /^\d{6,14}$/.test(candidate));
+}
+
+async function fetchUpcItemDbProduct(code) {
+  for (const candidate of barcodeCandidates(code)) {
+    try {
+      const response = await fetch(`https://api.upcitemdb.com/prod/trial/lookup?upc=${candidate}`);
+      if (!response.ok) continue;
+      const data = await response.json();
+      const item = data.items?.[0];
+      if (!item) continue;
+
+      return {
+        upc: item.upc || candidate,
+        name: item.title || "Unknown product",
+        brand: item.brand || "Brand unavailable",
+        size: item.size || "Size unavailable",
+        category: item.category || "Product",
+        imageUrl: item.images?.[0] || "",
+        source: "UPCItemDB"
+      };
+    } catch (error) {
+      continue;
+    }
+  }
+
+  return null;
+}
+
+function majorBrandFallback(code) {
+  const compact = String(code).replace(/\D/g, "");
+  const withoutLeadingZero = compact.startsWith("0") ? compact.slice(1) : compact;
+
+  if (withoutLeadingZero.startsWith("25500")) {
+    return {
+      upc: compact,
+      name: "Folgers Coffee",
+      brand: "Folgers",
+      size: "Size varies by package",
+      category: "Coffee",
+      imageUrl: "",
+      source: "major brand fallback",
+      confidence: "brand-prefix"
+    };
+  }
+
+  return null;
+}
+
+async function fetchLiveProduct(code) {
+  return await fetchOpenFoodFactsProduct(code)
+    || await fetchUpcItemDbProduct(code)
+    || majorBrandFallback(code);
 }
 
 function mergeLiveProduct(localProduct, liveProduct, code) {
@@ -301,7 +373,9 @@ function mergeLiveProduct(localProduct, liveProduct, code) {
       stores: [],
       history: [],
       alternative: null,
-      insight: "Product data was found live, but PriceScout has not collected local price history for this item yet."
+      insight: liveProduct.confidence === "brand-prefix"
+        ? "PriceScout recognized the manufacturer prefix, but still needs an exact product match or local price confirmations for this package."
+        : "Product data was found live, but PriceScout has not collected local price history for this item yet."
     };
   }
 
@@ -761,7 +835,7 @@ async function lookup(query) {
   els.progressBar.style.width = "18%";
   els.loadingText.textContent = shouldFetchLive ? "Checking live UPC database" : "Checking local product profiles";
 
-  const liveProduct = shouldFetchLive ? await fetchOpenFoodFactsProduct(code) : null;
+  const liveProduct = shouldFetchLive ? await fetchLiveProduct(code) : null;
   const product = mergeLiveProduct(localProduct, liveProduct, code || query);
 
   if (!hasPriceProfile(product)) {
