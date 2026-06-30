@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PriceScout</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="scanner-pane" aria-label="Barcode scanner">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">PriceScout</p>
+            <h1>Scan. Compare. Buy smarter.</h1>
+          </div>
+          <div class="location-pill" aria-label="Current market">
+            <span class="dot"></span>
+            Columbus, OH
+          </div>
+        </header>
+
+        <div class="scanner-frame">
+          <video id="camera" class="camera" autoplay playsinline muted></video>
+          <div id="cameraFallback" class="camera-fallback">
+            <div class="barcode-mark" aria-hidden="true">
+              <span></span><span></span><span></span><span></span><span></span>
+              <span></span><span></span><span></span><span></span>
+            </div>
+            <p>Camera scanner ready</p>
+          </div>
+          <div id="cameraNotice" class="camera-notice hidden"></div>
+          <div class="scan-grid" aria-hidden="true"></div>
+          <div id="scanLine" class="scan-line"></div>
+          <div class="corner top-left"></div>
+          <div class="corner top-right"></div>
+          <div class="corner bottom-left"></div>
+          <div class="corner bottom-right"></div>
+        </div>
+
+        <div class="scan-actions" aria-label="Scanner controls">
+          <button id="startCamera" class="primary-btn" type="button">
+            <span aria-hidden="true">[]</span>
+            Start camera
+          </button>
+          <button id="demoScan" class="icon-btn" type="button" aria-label="Run demo scan" title="Run demo scan">Go</button>
+          <button id="stopCamera" class="icon-btn" type="button" aria-label="Stop camera" title="Stop camera">Stop</button>
+        </div>
+
+        <form id="lookupForm" class="manual-lookup" autocomplete="off">
+          <label for="upcInput">UPC or product</label>
+          <div class="lookup-row">
+            <input id="upcInput" name="upc" type="text" inputmode="numeric" placeholder="Try 04963406 or oats" />
+            <button type="submit">Look up</button>
+          </div>
+        </form>
+
+        <div class="demo-products" aria-label="Demo products">
+          <button type="button" data-code="04963406">Oat milk</button>
+          <button type="button" data-code="041570052057">Peanut butter</button>
+          <button type="button" data-code="036000291452">Paper towels</button>
+        </div>
+      </section>
+
+      <section class="results-pane" aria-live="polite">
+        <div id="emptyState" class="empty-state">
+          <p class="eyebrow">Waiting for a scan</p>
+          <h2>Point the camera at a barcode or try a demo product.</h2>
+          <p>PriceScout will compare local prices, show the recent trend, and suggest a cheaper nearby alternative.</p>
+        </div>
+
+        <div id="loadingState" class="loading-state hidden">
+          <p class="eyebrow">Reading barcode</p>
+          <h2>Checking local prices...</h2>
+          <div class="progress-track"><span id="progressBar"></span></div>
+          <p id="loadingText">Identifying product</p>
+        </div>
+
+        <article id="productResult" class="product-result hidden">
+          <header class="product-header">
+            <div>
+              <p id="productMeta" class="eyebrow">UPC</p>
+              <h2 id="productName"></h2>
+              <p id="productBrand" class="subtle"></p>
+            </div>
+            <div id="dealBadge" class="deal-badge">Fair</div>
+          </header>
+
+          <div class="hero-metrics">
+            <div>
+              <span class="metric-label">Best local</span>
+              <strong id="bestPrice">$0.00</strong>
+              <span id="bestStore"></span>
+            </div>
+            <div>
+              <span class="metric-label">6 month trend</span>
+              <strong id="trendValue">0%</strong>
+              <span id="trendCopy"></span>
+            </div>
+            <div>
+              <span class="metric-label">Alternative</span>
+              <strong id="savingsValue">$0.00</strong>
+              <span id="alternativeName"></span>
+            </div>
+          </div>
+
+          <section class="insight-band">
+            <span aria-hidden="true">i</span>
+            <p id="insightText"></p>
+          </section>
+
+          <section class="store-section">
+            <div class="section-heading">
+              <h3>Nearby stores</h3>
+              <button id="sortStores" class="text-btn" type="button">Sort by price</button>
+            </div>
+            <div id="storeList" class="store-list"></div>
+          </section>
+
+          <section class="history-section">
+            <div class="section-heading">
+              <h3>Price history</h3>
+              <span id="historyRange">6 months</span>
+            </div>
+            <svg id="historyChart" class="history-chart" viewBox="0 0 640 180" role="img" aria-label="Six month price history"></svg>
+          </section>
+
+          <section class="alternative-section">
+            <h3>Store-brand swap</h3>
+            <div id="alternativeCard" class="alternative-card"></div>
+          </section>
+        </article>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
