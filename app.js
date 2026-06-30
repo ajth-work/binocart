@@ -94,6 +94,7 @@ const els = {
   alternativeCard: document.querySelector("#alternativeCard"),
   sortStores: document.querySelector("#sortStores"),
   addToBasket: document.querySelector("#addToBasket"),
+  saveProduct: document.querySelector("#saveProduct"),
   basketCount: document.querySelector("#basketCount"),
   basketList: document.querySelector("#basketList"),
   seedBasket: document.querySelector("#seedBasket"),
@@ -106,7 +107,22 @@ const els = {
   optimizedStops: document.querySelector("#optimizedStops"),
   routeTitle: document.querySelector("#routeTitle"),
   routeSubtitle: document.querySelector("#routeSubtitle"),
-  routeList: document.querySelector("#routeList")
+  routeList: document.querySelector("#routeList"),
+  profileName: document.querySelector("#profileName"),
+  profileNameInput: document.querySelector("#profileNameInput"),
+  profileForm: document.querySelector("#profileForm"),
+  profileStats: document.querySelector("#profileStats"),
+  navButtons: document.querySelectorAll("[data-view-target]"),
+  views: document.querySelectorAll("[data-view]"),
+  groupForm: document.querySelector("#groupForm"),
+  groupSelect: document.querySelector("#groupSelect"),
+  groupNameInput: document.querySelector("#groupNameInput"),
+  groupCards: document.querySelector("#groupCards"),
+  newGroupQuick: document.querySelector("#newGroupQuick"),
+  historyList: document.querySelector("#historyList"),
+  clearHistory: document.querySelector("#clearHistory"),
+  savedList: document.querySelector("#savedList"),
+  saveCurrent: document.querySelector("#saveCurrent")
 };
 
 let stream = null;
@@ -116,11 +132,106 @@ let torchOn = false;
 let torchSupported = false;
 let currentProduct = null;
 let sortAscending = true;
+let profile = null;
 let basket = [];
 let optimizerMode = "single";
+const profileKey = "pricescout.profile.v1";
 
 function money(value) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value);
+}
+
+function makeId(prefix) {
+  return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+function defaultProfile() {
+  const weeklyId = makeId("group");
+  return {
+    id: makeId("profile"),
+    name: "My profile",
+    activeGroupId: weeklyId,
+    groups: [
+      { id: weeklyId, name: "Weekly staples", items: [] },
+      { id: makeId("group"), name: "Snacks for Derek", items: [] }
+    ],
+    history: [],
+    saved: []
+  };
+}
+
+function loadProfile() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(profileKey));
+    profile = stored?.id ? stored : defaultProfile();
+  } catch (error) {
+    profile = defaultProfile();
+  }
+
+  if (!Array.isArray(profile.groups) || profile.groups.length === 0) {
+    profile.groups = defaultProfile().groups;
+  }
+  if (!profile.activeGroupId || !profile.groups.some((group) => group.id === profile.activeGroupId)) {
+    profile.activeGroupId = profile.groups[0].id;
+  }
+  profile.history = Array.isArray(profile.history) ? profile.history : [];
+  profile.saved = Array.isArray(profile.saved) ? profile.saved : [];
+  basket = activeGroup().items;
+}
+
+function saveProfile() {
+  localStorage.setItem(profileKey, JSON.stringify(profile));
+}
+
+function activeGroup() {
+  return profile.groups.find((group) => group.id === profile.activeGroupId) || profile.groups[0];
+}
+
+function productSnapshot(product) {
+  return {
+    upc: product.upc,
+    name: product.name,
+    brand: product.brand,
+    size: product.size,
+    category: product.category,
+    imageUrl: product.imageUrl || "",
+    source: product.source || "",
+    stores: product.stores || [],
+    history: product.history || [],
+    alternative: product.alternative || null,
+    insight: product.insight || ""
+  };
+}
+
+function switchView(viewName) {
+  els.views.forEach((view) => view.classList.toggle("active", view.dataset.view === viewName));
+  els.navButtons.forEach((button) => button.classList.toggle("active", button.dataset.viewTarget === viewName));
+  if (viewName === "list") renderGroupCards();
+  if (viewName === "history") renderHistory();
+  if (viewName === "saved") renderSaved();
+  if (viewName === "profile") renderProfile();
+}
+
+function recordScan(product) {
+  const scan = {
+    ...productSnapshot(product),
+    scannedAt: new Date().toISOString()
+  };
+  profile.history = [scan, ...profile.history.filter((item) => item.upc !== product.upc)].slice(0, 30);
+  saveProfile();
+  renderHistory();
+  renderProfile();
+}
+
+function saveProduct(product) {
+  if (!product) return;
+  if (!profile.saved.some((item) => item.upc === product.upc)) {
+    profile.saved.unshift(productSnapshot(product));
+    profile.saved = profile.saved.slice(0, 30);
+    saveProfile();
+  }
+  renderSaved();
+  renderProfile();
 }
 
 function getProduct(query) {
@@ -348,6 +459,7 @@ function renderChart(product) {
 
 function renderProduct(product) {
   currentProduct = product;
+  recordScan(product);
   const store = bestStore(product);
   const priceTrend = trend(product);
   const rating = deal(product);
@@ -405,15 +517,23 @@ function allStoreNames() {
 }
 
 function addProductToBasket(product) {
-  if (!basket.some((item) => item.upc === product.upc)) {
-    basket.push(product);
+  const group = activeGroup();
+  if (!group.items.some((item) => item.upc === product.upc)) {
+    group.items.push(productSnapshot(product));
   }
+  basket = group.items;
+  saveProfile();
   renderBasket();
+  renderGroupCards();
 }
 
 function removeProductFromBasket(upc) {
-  basket = basket.filter((item) => item.upc !== upc);
+  const group = activeGroup();
+  group.items = group.items.filter((item) => item.upc !== upc);
+  basket = group.items;
+  saveProfile();
   renderBasket();
+  renderGroupCards();
 }
 
 function singleStorePlan() {
@@ -488,6 +608,7 @@ function renderOptimizer() {
 }
 
 function renderBasket() {
+  basket = activeGroup().items;
   els.basketCount.textContent = basketLabel(basket.length);
   if (basket.length === 0) {
     els.basketList.innerHTML = `<div class="basket-empty">Scan items or add demo products to plan a trip.</div>`;
@@ -496,13 +617,109 @@ function renderBasket() {
       <div class="basket-item">
         <div>
           <strong>${product.name}</strong>
-          <p>${product.size} - best ${money(bestStore(product).price)} at ${bestStore(product).name}</p>
+          <p>${product.size} - ${hasPriceProfile(product) ? `best ${money(bestStore(product).price)} at ${bestStore(product).name}` : "needs local price"}</p>
         </div>
         <button type="button" data-remove="${product.upc}" aria-label="Remove ${product.name}">x</button>
       </div>
     `).join("");
   }
   renderOptimizer();
+  renderGroupSelect();
+}
+
+function renderGroupSelect() {
+  els.groupSelect.innerHTML = profile.groups.map((group) => `
+    <option value="${group.id}" ${group.id === profile.activeGroupId ? "selected" : ""}>${group.name}</option>
+  `).join("");
+}
+
+function createGroup(name) {
+  const trimmed = name.trim() || `List ${profile.groups.length + 1}`;
+  const group = { id: makeId("group"), name: trimmed, items: [] };
+  profile.groups.push(group);
+  profile.activeGroupId = group.id;
+  basket = group.items;
+  saveProfile();
+  renderBasket();
+  renderGroupCards();
+  renderProfile();
+}
+
+function renderGroupCards() {
+  els.groupCards.innerHTML = profile.groups.map((group) => {
+    const pricedItems = group.items.filter(hasPriceProfile);
+    const total = pricedItems.reduce((sum, product) => sum + (bestStore(product)?.price || 0), 0);
+    return `
+      <article class="group-card">
+        <header>
+          <div>
+            <h3>${group.name}</h3>
+            <p class="subtle">${basketLabel(group.items.length)} - best-item total ${money(total)}</p>
+          </div>
+          <div class="card-actions">
+            <button class="ghost-btn" type="button" data-open-group="${group.id}">Open</button>
+            <button class="ghost-btn" type="button" data-seed-group="${group.id}">Demo</button>
+          </div>
+        </header>
+        <div class="basket-list">
+          ${group.items.length ? group.items.map((product) => `
+            <div class="basket-item">
+              <div>
+                <strong>${product.name}</strong>
+                <p>${product.size} - ${hasPriceProfile(product) ? `${money(bestStore(product).price)} at ${bestStore(product).name}` : "needs local price"}</p>
+              </div>
+            </div>
+          `).join("") : `<div class="basket-empty">No items in this group yet.</div>`}
+        </div>
+      </article>
+    `;
+  }).join("");
+}
+
+function renderHistory() {
+  els.historyList.innerHTML = profile.history.length
+    ? profile.history.map((product) => productListCard(product, "history")).join("")
+    : `<div class="basket-empty">Scanned products will appear here automatically.</div>`;
+}
+
+function renderSaved() {
+  els.savedList.innerHTML = profile.saved.length
+    ? profile.saved.map((product) => productListCard(product, "saved")).join("")
+    : `<div class="basket-empty">Save products you buy often, then add them back to a list quickly.</div>`;
+}
+
+function productListCard(product, source) {
+  const image = product.imageUrl
+    ? `<img src="${product.imageUrl}" alt="" />`
+    : `<div class="history-thumb">UPC</div>`;
+  return `
+    <article class="history-card">
+      <div class="history-product">
+        ${image}
+        <div>
+          <strong>${product.name}</strong>
+          <p class="subtle">${product.brand} - ${product.size}</p>
+          ${product.scannedAt ? `<p class="subtle">${new Date(product.scannedAt).toLocaleString()}</p>` : ""}
+        </div>
+      </div>
+      <div class="card-actions">
+        <button class="ghost-btn" type="button" data-relookup="${product.upc}">View</button>
+        ${hasPriceProfile(product) ? `<button class="ghost-btn" type="button" data-add-snapshot="${product.upc}" data-source="${source}">Add</button>` : ""}
+      </div>
+    </article>
+  `;
+}
+
+function renderProfile() {
+  els.profileName.textContent = profile.name;
+  els.profileNameInput.value = profile.name;
+  els.profileStats.innerHTML = `
+    <article class="profile-card">
+      <strong>${profile.name}</strong>
+      <p class="subtle">Local-only profile. Email sync can come later.</p>
+      <p>${profile.groups.length} list groups - ${profile.history.length} recent scans - ${profile.saved.length} saved products</p>
+    </article>
+  `;
 }
 
 function simulateLookup(product) {
@@ -638,13 +855,22 @@ els.sortStores.addEventListener("click", () => {
 els.addToBasket.addEventListener("click", () => {
   if (currentProduct) addProductToBasket(currentProduct);
 });
+els.saveProduct.addEventListener("click", () => {
+  saveProduct(currentProduct);
+});
 els.seedBasket.addEventListener("click", () => {
-  basket = Object.values(products);
+  activeGroup().items = Object.values(products).map(productSnapshot);
+  basket = activeGroup().items;
+  saveProfile();
   renderBasket();
+  renderGroupCards();
 });
 els.clearBasket.addEventListener("click", () => {
-  basket = [];
+  activeGroup().items = [];
+  basket = activeGroup().items;
+  saveProfile();
   renderBasket();
+  renderGroupCards();
 });
 els.basketList.addEventListener("click", (event) => {
   const button = event.target.closest("[data-remove]");
@@ -658,10 +884,82 @@ els.multiStoreMode.addEventListener("click", () => {
   optimizerMode = "multi";
   renderOptimizer();
 });
+els.navButtons.forEach((button) => {
+  button.addEventListener("click", () => switchView(button.dataset.viewTarget));
+});
+els.groupSelect.addEventListener("change", () => {
+  profile.activeGroupId = els.groupSelect.value;
+  basket = activeGroup().items;
+  saveProfile();
+  renderBasket();
+});
+els.groupForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  createGroup(els.groupNameInput.value);
+  els.groupNameInput.value = "";
+});
+els.newGroupQuick.addEventListener("click", () => {
+  createGroup("New list");
+  switchView("list");
+});
+els.profileForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  profile.name = els.profileNameInput.value.trim() || "My profile";
+  saveProfile();
+  renderProfile();
+});
+els.clearHistory.addEventListener("click", () => {
+  profile.history = [];
+  saveProfile();
+  renderHistory();
+  renderProfile();
+});
+els.saveCurrent.addEventListener("click", () => {
+  saveProduct(currentProduct);
+});
+els.groupCards.addEventListener("click", (event) => {
+  const openButton = event.target.closest("[data-open-group]");
+  const seedButton = event.target.closest("[data-seed-group]");
+  if (openButton) {
+    profile.activeGroupId = openButton.dataset.openGroup;
+    basket = activeGroup().items;
+    saveProfile();
+    renderBasket();
+    switchView("scan");
+  }
+  if (seedButton) {
+    const group = profile.groups.find((item) => item.id === seedButton.dataset.seedGroup);
+    if (group) {
+      group.items = Object.values(products).map(productSnapshot);
+      saveProfile();
+      renderGroupCards();
+      if (group.id === profile.activeGroupId) renderBasket();
+    }
+  }
+});
+function handleProductListAction(event) {
+  const relookup = event.target.closest("[data-relookup]");
+  const addSnapshot = event.target.closest("[data-add-snapshot]");
+  if (relookup) {
+    switchView("scan");
+    lookup(relookup.dataset.relookup);
+  }
+  if (addSnapshot) {
+    const source = addSnapshot.dataset.source === "saved" ? profile.saved : profile.history;
+    const product = source.find((item) => item.upc === addSnapshot.dataset.addSnapshot);
+    if (product) addProductToBasket(product);
+  }
+}
+els.historyList.addEventListener("click", handleProductListAction);
+els.savedList.addEventListener("click", handleProductListAction);
 document.querySelectorAll("[data-code]").forEach((button) => {
   button.addEventListener("click", () => lookup(button.dataset.code));
 });
 
+loadProfile();
 renderBasket();
+renderHistory();
+renderSaved();
+renderProfile();
 updateTorchButton();
 setMode("empty");

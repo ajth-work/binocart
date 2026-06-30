@@ -28,7 +28,8 @@ body {
 }
 
 button,
-input {
+input,
+select {
   font: inherit;
 }
 
@@ -37,12 +38,64 @@ button {
   cursor: pointer;
 }
 
+.app-nav {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+  width: min(1280px, 100%);
+  margin: 0 auto;
+  padding: 14px 20px 0;
+  background: linear-gradient(180deg, rgba(16, 19, 24, 0.98), rgba(16, 19, 24, 0.82));
+  backdrop-filter: blur(14px);
+}
+
+.app-nav nav,
+.bottom-nav {
+  display: flex;
+  gap: 6px;
+}
+
+.nav-btn {
+  min-height: 38px;
+  padding: 0 12px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--muted);
+  font-weight: 900;
+}
+
+.nav-btn.active {
+  background: var(--green);
+  color: #07120c;
+}
+
+.bottom-nav,
+.app-view {
+  display: none;
+}
+
+.app-view.active {
+  display: grid;
+}
+
 .app-shell {
   display: grid;
   grid-template-columns: minmax(320px, 470px) minmax(0, 1fr);
   gap: 20px;
   width: min(1280px, 100%);
-  min-height: 100vh;
+  min-height: calc(100vh - 62px);
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.app-page {
+  gap: 18px;
+  width: min(1280px, 100%);
+  min-height: calc(100vh - 74px);
   margin: 0 auto;
   padding: 20px;
 }
@@ -72,6 +125,7 @@ button {
 .topbar,
 .product-header,
 .section-heading,
+.page-heading,
 .scan-actions,
 .lookup-row,
 .basket-actions {
@@ -79,6 +133,13 @@ button {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+}
+
+.page-heading {
+  padding: 18px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 8px;
+  background: rgba(23, 27, 34, 0.88);
 }
 
 .eyebrow {
@@ -329,7 +390,8 @@ h3 {
   font-weight: 700;
 }
 
-.lookup-row input {
+.lookup-row input,
+.lookup-row select {
   min-width: 0;
   width: 100%;
   min-height: 46px;
@@ -341,7 +403,8 @@ h3 {
   outline: 0;
 }
 
-.lookup-row input:focus {
+.lookup-row input:focus,
+.lookup-row select:focus {
   border-color: var(--blue);
   box-shadow: 0 0 0 3px rgba(82, 168, 255, 0.18);
 }
@@ -370,6 +433,29 @@ h3 {
   gap: 12px;
   margin-top: auto;
   padding-top: 2px;
+}
+
+.group-form,
+.profile-form {
+  display: grid;
+  gap: 8px;
+}
+
+.group-form label,
+.profile-form label {
+  color: var(--muted);
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.group-form > input,
+.profile-form input {
+  min-height: 42px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #0f141b;
+  color: var(--text);
 }
 
 .basket-list {
@@ -411,6 +497,65 @@ h3 {
   background: rgba(255, 107, 107, 0.12);
   color: var(--red);
   font-weight: 900;
+}
+
+.group-cards,
+.history-list,
+.profile-stats {
+  display: grid;
+  gap: 12px;
+}
+
+.group-card,
+.history-card,
+.profile-card {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid rgba(154, 167, 184, 0.16);
+  border-radius: 8px;
+  background: rgba(23, 27, 34, 0.88);
+}
+
+.group-card header,
+.history-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+}
+
+.history-product {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  min-width: 0;
+}
+
+.history-product img,
+.history-thumb {
+  width: 54px;
+  height: 54px;
+  flex: 0 0 auto;
+  border: 1px solid rgba(154, 167, 184, 0.18);
+  border-radius: 8px;
+  background: #fff;
+  object-fit: contain;
+}
+
+.history-thumb {
+  display: grid;
+  place-items: center;
+  background: rgba(82, 168, 255, 0.1);
+  color: var(--blue);
+  font-weight: 900;
+}
+
+.card-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: end;
 }
 
 .empty-state,
@@ -749,8 +894,44 @@ h3 {
 }
 
 @media (max-width: 900px) {
+  body {
+    padding-bottom: 76px;
+  }
+
+  .app-nav {
+    padding: 10px 12px 0;
+  }
+
+  .app-nav nav {
+    display: none;
+  }
+
+  .bottom-nav {
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    z-index: 30;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    padding: 6px;
+    border: 1px solid rgba(154, 167, 184, 0.22);
+    border-radius: 8px;
+    background: rgba(15, 20, 27, 0.96);
+    box-shadow: var(--shadow);
+  }
+
+  .bottom-nav .nav-btn {
+    padding: 0 6px;
+    font-size: 0.78rem;
+  }
+
   .app-shell {
     grid-template-columns: 1fr;
+    padding: 12px;
+  }
+
+  .app-page {
     padding: 12px;
   }
 
@@ -792,5 +973,14 @@ h3 {
 
   .store-distance {
     grid-column: 1 / -1;
+  }
+
+  .group-card header,
+  .history-card {
+    grid-template-columns: 1fr;
+  }
+
+  .card-actions {
+    justify-content: start;
   }
 }
