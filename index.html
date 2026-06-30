@@ -60,6 +60,18 @@
           <button type="button" data-code="041570052057">Peanut butter</button>
           <button type="button" data-code="036000291452">Paper towels</button>
         </div>
+
+        <section class="basket-panel" aria-label="Grocery list">
+          <div class="section-heading">
+            <h3>Grocery list</h3>
+            <span id="basketCount">0 items</span>
+          </div>
+          <div id="basketList" class="basket-list"></div>
+          <div class="basket-actions">
+            <button id="seedBasket" class="ghost-btn" type="button">Build demo list</button>
+            <button id="clearBasket" class="ghost-btn" type="button">Clear</button>
+          </div>
+        </section>
       </section>
 
       <section class="results-pane" aria-live="polite">
@@ -83,7 +95,10 @@
               <h2 id="productName"></h2>
               <p id="productBrand" class="subtle"></p>
             </div>
-            <div id="dealBadge" class="deal-badge">Fair</div>
+            <div class="product-actions">
+              <div id="dealBadge" class="deal-badge">Fair</div>
+              <button id="addToBasket" class="small-action" type="button">Add to list</button>
+            </div>
           </header>
 
           <div class="hero-metrics">
@@ -128,6 +143,42 @@
           <section class="alternative-section">
             <h3>Store-brand swap</h3>
             <div id="alternativeCard" class="alternative-card"></div>
+          </section>
+        </article>
+
+        <article id="optimizerPanel" class="optimizer-panel hidden">
+          <header class="section-heading">
+            <div>
+              <p class="eyebrow">Trip planner</p>
+              <h2>Optimized shopping list</h2>
+            </div>
+            <div class="mode-toggle" aria-label="Shopping mode">
+              <button id="singleStoreMode" class="active" type="button">One shop</button>
+              <button id="multiStoreMode" type="button">Multi shop</button>
+            </div>
+          </header>
+
+          <div class="optimizer-summary">
+            <div>
+              <span class="metric-label">Estimated total</span>
+              <strong id="optimizedTotal">$0.00</strong>
+            </div>
+            <div>
+              <span class="metric-label">Savings</span>
+              <strong id="optimizedSavings">$0.00</strong>
+            </div>
+            <div>
+              <span class="metric-label">Stops</span>
+              <strong id="optimizedStops">1</strong>
+            </div>
+          </div>
+
+          <section class="route-card">
+            <div class="section-heading">
+              <h3 id="routeTitle">Best single store</h3>
+              <span id="routeSubtitle">Balanced by basket total</span>
+            </div>
+            <div id="routeList" class="route-list"></div>
           </section>
         </article>
       </section>

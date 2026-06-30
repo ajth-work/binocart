@@ -89,7 +89,21 @@ const els = {
   storeList: document.querySelector("#storeList"),
   historyChart: document.querySelector("#historyChart"),
   alternativeCard: document.querySelector("#alternativeCard"),
-  sortStores: document.querySelector("#sortStores")
+  sortStores: document.querySelector("#sortStores"),
+  addToBasket: document.querySelector("#addToBasket"),
+  basketCount: document.querySelector("#basketCount"),
+  basketList: document.querySelector("#basketList"),
+  seedBasket: document.querySelector("#seedBasket"),
+  clearBasket: document.querySelector("#clearBasket"),
+  optimizerPanel: document.querySelector("#optimizerPanel"),
+  singleStoreMode: document.querySelector("#singleStoreMode"),
+  multiStoreMode: document.querySelector("#multiStoreMode"),
+  optimizedTotal: document.querySelector("#optimizedTotal"),
+  optimizedSavings: document.querySelector("#optimizedSavings"),
+  optimizedStops: document.querySelector("#optimizedStops"),
+  routeTitle: document.querySelector("#routeTitle"),
+  routeSubtitle: document.querySelector("#routeSubtitle"),
+  routeList: document.querySelector("#routeList")
 };
 
 let stream = null;
@@ -97,6 +111,8 @@ let detector = null;
 let scanning = false;
 let currentProduct = null;
 let sortAscending = true;
+let basket = [];
+let optimizerMode = "single";
 
 function money(value) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value);
@@ -224,6 +240,119 @@ function renderProduct(product) {
   setMode("result");
 }
 
+function basketLabel(count) {
+  return `${count} ${count === 1 ? "item" : "items"}`;
+}
+
+function productStorePrice(product, storeName) {
+  return product.stores.find((store) => store.name === storeName)?.price;
+}
+
+function allStoreNames() {
+  return [...new Set(Object.values(products).flatMap((product) => product.stores.map((store) => store.name)))];
+}
+
+function addProductToBasket(product) {
+  if (!basket.some((item) => item.upc === product.upc)) {
+    basket.push(product);
+  }
+  renderBasket();
+}
+
+function removeProductFromBasket(upc) {
+  basket = basket.filter((item) => item.upc !== upc);
+  renderBasket();
+}
+
+function singleStorePlan() {
+  const storePlans = allStoreNames().map((storeName) => {
+    const items = basket.map((product) => ({
+      product,
+      price: productStorePrice(product, storeName)
+    })).filter((item) => typeof item.price === "number");
+    const total = items.reduce((sum, item) => sum + item.price, 0);
+    return { storeName, items, total };
+  }).filter((plan) => plan.items.length === basket.length);
+
+  return storePlans.sort((a, b) => a.total - b.total)[0] || null;
+}
+
+function multiStorePlan() {
+  const assignments = basket.map((product) => {
+    const store = bestStore(product);
+    return { product, storeName: store.name, price: store.price };
+  });
+  const grouped = assignments.reduce((groups, item) => {
+    groups[item.storeName] = groups[item.storeName] || [];
+    groups[item.storeName].push(item);
+    return groups;
+  }, {});
+
+  return Object.entries(grouped).map(([storeName, items]) => ({
+    storeName,
+    items,
+    total: items.reduce((sum, item) => sum + item.price, 0),
+    distance: products[items[0].product.upc].stores.find((store) => store.name === storeName)?.distance || ""
+  })).sort((a, b) => parseFloat(a.distance) - parseFloat(b.distance));
+}
+
+function renderOptimizer() {
+  els.optimizerPanel.classList.toggle("hidden", basket.length === 0);
+  if (basket.length === 0) return;
+
+  const singlePlan = singleStorePlan();
+  const multiPlan = multiStorePlan();
+  const multiTotal = multiPlan.reduce((sum, stop) => sum + stop.total, 0);
+  const currentStops = optimizerMode === "single" && singlePlan
+    ? [{ ...singlePlan, distance: singlePlan.items[0]?.product.stores.find((store) => store.name === singlePlan.storeName)?.distance || "" }]
+    : multiPlan;
+  const currentTotal = currentStops.reduce((sum, stop) => sum + stop.total, 0);
+  const savings = singlePlan ? singlePlan.total - multiTotal : 0;
+
+  els.singleStoreMode.classList.toggle("active", optimizerMode === "single");
+  els.multiStoreMode.classList.toggle("active", optimizerMode === "multi");
+  els.optimizedTotal.textContent = money(currentTotal);
+  els.optimizedSavings.textContent = optimizerMode === "multi" ? money(Math.max(savings, 0)) : money(0);
+  els.optimizedStops.textContent = String(currentStops.length);
+  els.routeTitle.textContent = optimizerMode === "single" ? "Best single store" : "Optimized route";
+  els.routeSubtitle.textContent = optimizerMode === "single"
+    ? "One checkout, lowest basket total"
+    : "Split only where the savings justify another stop";
+
+  els.routeList.innerHTML = currentStops.map((stop, index) => `
+    <article class="route-stop">
+      <header>
+        <div>
+          <strong>${index + 1}. ${stop.storeName}</strong>
+          <div class="store-distance">${stop.distance ? `${stop.distance} away` : "Best basket match"}</div>
+        </div>
+        <strong>${money(stop.total)}</strong>
+      </header>
+      <ol>
+        ${stop.items.map((item) => `<li><strong>${item.product.name}</strong> - ${money(item.price)}</li>`).join("")}
+      </ol>
+    </article>
+  `).join("");
+}
+
+function renderBasket() {
+  els.basketCount.textContent = basketLabel(basket.length);
+  if (basket.length === 0) {
+    els.basketList.innerHTML = `<div class="basket-empty">Scan items or add demo products to plan a trip.</div>`;
+  } else {
+    els.basketList.innerHTML = basket.map((product) => `
+      <div class="basket-item">
+        <div>
+          <strong>${product.name}</strong>
+          <p>${product.size} - best ${money(bestStore(product).price)} at ${bestStore(product).name}</p>
+        </div>
+        <button type="button" data-remove="${product.upc}" aria-label="Remove ${product.name}">x</button>
+      </div>
+    `).join("");
+  }
+  renderOptimizer();
+}
+
 function simulateLookup(product) {
   setMode("loading");
   const steps = ["Identifying product", "Checking nearby stores", "Reading price history", "Finding cheaper alternatives"];
@@ -339,8 +468,32 @@ els.sortStores.addEventListener("click", () => {
   els.sortStores.textContent = sortAscending ? "Sort by price" : "Sort by store";
   if (currentProduct) renderStores(currentProduct);
 });
+els.addToBasket.addEventListener("click", () => {
+  if (currentProduct) addProductToBasket(currentProduct);
+});
+els.seedBasket.addEventListener("click", () => {
+  basket = Object.values(products);
+  renderBasket();
+});
+els.clearBasket.addEventListener("click", () => {
+  basket = [];
+  renderBasket();
+});
+els.basketList.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-remove]");
+  if (button) removeProductFromBasket(button.dataset.remove);
+});
+els.singleStoreMode.addEventListener("click", () => {
+  optimizerMode = "single";
+  renderOptimizer();
+});
+els.multiStoreMode.addEventListener("click", () => {
+  optimizerMode = "multi";
+  renderOptimizer();
+});
 document.querySelectorAll("[data-code]").forEach((button) => {
   button.addEventListener("click", () => lookup(button.dataset.code));
 });
 
+renderBasket();
 setMode("empty");
