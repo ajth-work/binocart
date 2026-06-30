@@ -136,6 +136,8 @@ let sortAscending = true;
 let profile = null;
 let basket = [];
 let optimizerMode = "single";
+let activeViewName = "scan";
+const viewScrollPositions = {};
 const profileKey = "pricescout.profile.v1";
 
 function money(value) {
@@ -205,13 +207,17 @@ function productSnapshot(product) {
 }
 
 function switchView(viewName) {
+  viewScrollPositions[activeViewName] = window.scrollY;
+  activeViewName = viewName;
   els.views.forEach((view) => view.classList.toggle("active", view.dataset.view === viewName));
   els.navButtons.forEach((button) => button.classList.toggle("active", button.dataset.viewTarget === viewName));
   if (viewName === "list") renderGroupCards();
   if (viewName === "history") renderHistory();
   if (viewName === "saved") renderSaved();
   if (viewName === "profile") renderProfile();
-  window.scrollTo(0, 0);
+  requestAnimationFrame(() => {
+    window.scrollTo(0, viewScrollPositions[viewName] || 0);
+  });
 }
 
 function recordScan(product) {
