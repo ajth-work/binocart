@@ -149,9 +149,12 @@ function cameraTrack() {
 }
 
 function updateTorchButton() {
-  els.toggleTorch.disabled = !stream || !torchSupported;
+  els.toggleTorch.disabled = !stream;
   els.toggleTorch.classList.toggle("active", torchOn);
   els.toggleTorch.textContent = torchOn ? "Lit" : "Light";
+  els.toggleTorch.title = stream
+    ? "Toggle flashlight"
+    : "Start camera before using flashlight";
 }
 
 function setupTorchControl() {
@@ -160,21 +163,14 @@ function setupTorchControl() {
   torchSupported = Boolean(capabilities.torch);
   torchOn = false;
   updateTorchButton();
-
-  if (!torchSupported && stream) {
-    showCameraNotice(
-      "Flashlight unavailable",
-      "This camera or browser did not expose torch control. Scanning still works."
-    );
-  }
 }
 
 async function setTorch(enabled) {
   const track = cameraTrack();
-  if (!track || !torchSupported) {
+  if (!track?.applyConstraints) {
     showCameraNotice(
       "Flashlight unavailable",
-      "This device did not expose torch control for the active camera."
+      "This browser cannot change camera torch settings from the web page."
     );
     return;
   }
@@ -182,14 +178,15 @@ async function setTorch(enabled) {
   try {
     await track.applyConstraints({ advanced: [{ torch: enabled }] });
     torchOn = enabled;
+    torchSupported = true;
     updateTorchButton();
+    clearCameraNotice();
   } catch (error) {
     torchOn = false;
-    torchSupported = false;
     updateTorchButton();
     showCameraNotice(
       "Flashlight unavailable",
-      "The browser blocked torch control for this camera session."
+      "This phone or browser rejected torch control for the active camera. Try Chrome on Android, and make sure the rear camera is selected."
     );
   }
 }
@@ -554,4 +551,5 @@ document.querySelectorAll("[data-code]").forEach((button) => {
 });
 
 renderBasket();
+updateTorchButton();
 setMode("empty");
