@@ -457,6 +457,26 @@ h3 {
   gap: 20px;
 }
 
+.product-header {
+  align-items: start;
+}
+
+.product-image {
+  width: 82px;
+  height: 82px;
+  border: 1px solid rgba(154, 167, 184, 0.2);
+  border-radius: 8px;
+  background: #fff;
+  object-fit: contain;
+}
+
+.source-line {
+  margin: 6px 0 0;
+  color: var(--blue);
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
 .product-actions {
   display: grid;
   gap: 8px;
@@ -466,6 +486,11 @@ h3 {
 .small-action {
   min-height: 36px;
   padding: 0 12px;
+}
+
+.small-action:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
 }
 
 .subtle,
@@ -497,6 +522,12 @@ h3 {
   background: rgba(244, 182, 63, 0.13);
   color: var(--amber);
   border-color: rgba(244, 182, 63, 0.28);
+}
+
+.deal-badge.tracking {
+  background: rgba(82, 168, 255, 0.13);
+  color: var(--blue);
+  border-color: rgba(82, 168, 255, 0.28);
 }
 
 .hero-metrics {

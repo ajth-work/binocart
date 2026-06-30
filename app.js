@@ -79,6 +79,8 @@ const els = {
   productMeta: document.querySelector("#productMeta"),
   productName: document.querySelector("#productName"),
   productBrand: document.querySelector("#productBrand"),
+  productImage: document.querySelector("#productImage"),
+  productSource: document.querySelector("#productSource"),
   dealBadge: document.querySelector("#dealBadge"),
   bestPrice: document.querySelector("#bestPrice"),
   bestStore: document.querySelector("#bestStore"),
@@ -125,6 +127,76 @@ function getProduct(query) {
   const normalized = String(query).trim().toLowerCase();
   const code = products[normalized] ? normalized : aliases[normalized] || normalized.replace(/\D/g, "");
   return products[code] || null;
+}
+
+function normalizedCode(query) {
+  const normalized = String(query).trim().toLowerCase();
+  return products[normalized] ? normalized : aliases[normalized] || normalized.replace(/\D/g, "");
+}
+
+function hasPriceProfile(product) {
+  return Array.isArray(product?.stores) && product.stores.length > 0;
+}
+
+async function fetchOpenFoodFactsProduct(code) {
+  if (!/^\d{6,14}$/.test(code)) return null;
+
+  const fields = [
+    "code",
+    "product_name",
+    "brands",
+    "quantity",
+    "categories",
+    "image_front_url",
+    "image_url"
+  ].join(",");
+  const url = `https://world.openfoodfacts.org/api/v3/product/${code}.json?fields=${fields}`;
+
+  try {
+    const response = await fetch(url);
+    if (!response.ok) return null;
+    const data = await response.json();
+    if (data.status !== "success" || !data.product) return null;
+
+    const product = data.product;
+    return {
+      upc: product.code || code,
+      name: product.product_name || "Unknown product",
+      brand: product.brands || "Brand unavailable",
+      size: product.quantity || "Size unavailable",
+      category: (product.categories || "Product").split(",")[0].trim(),
+      imageUrl: product.image_front_url || product.image_url || "",
+      source: "Open Food Facts"
+    };
+  } catch (error) {
+    return null;
+  }
+}
+
+function mergeLiveProduct(localProduct, liveProduct, code) {
+  if (localProduct) return localProduct;
+
+  if (liveProduct) {
+    return {
+      ...liveProduct,
+      stores: [],
+      history: [],
+      alternative: null,
+      insight: "Product data was found live, but PriceScout has not collected local price history for this item yet."
+    };
+  }
+
+  return {
+    upc: code,
+    name: "Product not found yet",
+    brand: "UPC database miss",
+    size: "Scan saved as unknown",
+    category: "Unknown",
+    stores: [],
+    history: [],
+    alternative: null,
+    insight: "No product record was found in the live UPC database. Manual lookup and future crowdsourced entries can still add it."
+  };
 }
 
 function setMode(mode) {
@@ -192,10 +264,14 @@ async function setTorch(enabled) {
 }
 
 function bestStore(product) {
+  if (!hasPriceProfile(product)) return null;
   return [...product.stores].sort((a, b) => a.price - b.price)[0];
 }
 
 function trend(product) {
+  if (!Array.isArray(product.history) || product.history.length < 2) {
+    return { change: 0, label: "No history yet" };
+  }
   const first = product.history[0];
   const last = product.history[product.history.length - 1];
   const change = ((last - first) / first) * 100;
@@ -206,6 +282,7 @@ function trend(product) {
 }
 
 function deal(product) {
+  if (!hasPriceProfile(product)) return "Tracking";
   const localBest = bestStore(product).price;
   const average = product.stores.reduce((sum, store) => sum + store.price, 0) / product.stores.length;
   if (localBest <= average * 0.9) return "Great";
@@ -215,6 +292,10 @@ function deal(product) {
 
 function renderStores(product) {
   const localBest = bestStore(product);
+  if (!localBest) {
+    els.storeList.innerHTML = `<div class="basket-empty">No local prices tracked yet. This is where crowdsourced store prices will appear once shoppers confirm them.</div>`;
+    return;
+  }
   const stores = [...product.stores].sort((a, b) => sortAscending ? a.price - b.price : a.name.localeCompare(b.name));
   els.storeList.innerHTML = stores.map((store) => `
     <div class="store-row ${store.name === localBest.name ? "best" : ""}">
@@ -229,6 +310,13 @@ function renderStores(product) {
 }
 
 function renderChart(product) {
+  if (!Array.isArray(product.history) || product.history.length < 2) {
+    els.historyChart.innerHTML = `
+      <text x="320" y="92" text-anchor="middle" fill="#9aa7b8" font-size="18">No price history yet</text>
+      <text x="320" y="122" text-anchor="middle" fill="#9aa7b8" font-size="13">Confirmed prices will build this chart over time.</text>
+    `;
+    return;
+  }
   const width = 640;
   const height = 180;
   const pad = 24;
@@ -263,27 +351,40 @@ function renderProduct(product) {
   const store = bestStore(product);
   const priceTrend = trend(product);
   const rating = deal(product);
-  const savings = store.price - product.alternative.price;
+  const savings = store && product.alternative ? store.price - product.alternative.price : 0;
 
   els.productMeta.textContent = `UPC ${product.upc} - ${product.category}`;
   els.productName.textContent = product.name;
   els.productBrand.textContent = `${product.brand} - ${product.size}`;
+  els.productSource.textContent = product.source ? `Live product data from ${product.source}` : "Seeded PriceScout profile";
+  els.productImage.classList.toggle("hidden", !product.imageUrl);
+  if (product.imageUrl) {
+    els.productImage.src = product.imageUrl;
+    els.productImage.alt = product.name;
+  } else {
+    els.productImage.removeAttribute("src");
+    els.productImage.alt = "";
+  }
   els.dealBadge.textContent = rating;
   els.dealBadge.className = `deal-badge ${rating.toLowerCase()}`;
-  els.bestPrice.textContent = money(store.price);
-  els.bestStore.textContent = `${store.name} - ${store.distance}`;
+  els.bestPrice.textContent = store ? money(store.price) : "TBD";
+  els.bestStore.textContent = store ? `${store.name} - ${store.distance}` : "Waiting for local prices";
   els.trendValue.textContent = `${priceTrend.change > 0 ? "+" : ""}${Math.round(priceTrend.change)}%`;
   els.trendCopy.textContent = priceTrend.label;
-  els.savingsValue.textContent = money(Math.max(savings, 0));
-  els.alternativeName.textContent = product.alternative.name;
+  els.savingsValue.textContent = product.alternative ? money(Math.max(savings, 0)) : "TBD";
+  els.alternativeName.textContent = product.alternative?.name || "No swap found yet";
   els.insightText.textContent = product.insight;
-  els.alternativeCard.innerHTML = `
-    <div>
-      <strong>${product.alternative.name}</strong>
-      <p>${product.alternative.store} - store-brand alternative</p>
-    </div>
-    <strong>${money(product.alternative.price)}</strong>
-  `;
+  els.addToBasket.disabled = !store;
+  els.addToBasket.textContent = store ? "Add to list" : "Needs price";
+  els.alternativeCard.innerHTML = product.alternative
+    ? `
+      <div>
+        <strong>${product.alternative.name}</strong>
+        <p>${product.alternative.store} - store-brand alternative</p>
+      </div>
+      <strong>${money(product.alternative.price)}</strong>
+    `
+    : `<div><strong>No store-brand swap yet</strong><p>PriceScout can suggest one after local price data exists for this item.</p></div>`;
 
   renderStores(product);
   renderChart(product);
@@ -295,6 +396,7 @@ function basketLabel(count) {
 }
 
 function productStorePrice(product, storeName) {
+  if (!hasPriceProfile(product)) return undefined;
   return product.stores.find((store) => store.name === storeName)?.price;
 }
 
@@ -328,7 +430,7 @@ function singleStorePlan() {
 }
 
 function multiStorePlan() {
-  const assignments = basket.map((product) => {
+  const assignments = basket.filter(hasPriceProfile).map((product) => {
     const store = bestStore(product);
     return { product, storeName: store.name, price: store.price };
   });
@@ -342,7 +444,7 @@ function multiStorePlan() {
     storeName,
     items,
     total: items.reduce((sum, item) => sum + item.price, 0),
-    distance: products[items[0].product.upc].stores.find((store) => store.name === storeName)?.distance || ""
+    distance: items[0].product.stores.find((store) => store.name === storeName)?.distance || ""
   })).sort((a, b) => parseFloat(a.distance) - parseFloat(b.distance));
 }
 
@@ -419,15 +521,25 @@ function simulateLookup(product) {
   }, 360);
 }
 
-function lookup(query) {
-  const product = getProduct(query);
-  if (!product) {
-    els.loadingText.textContent = "No local price profile found yet. Try a demo product.";
-    setMode("loading");
+async function lookup(query) {
+  const code = normalizedCode(query);
+  const localProduct = getProduct(query);
+  const shouldFetchLive = !localProduct && /^\d{6,14}$/.test(code);
+
+  setMode("loading");
+  els.progressBar.style.width = "18%";
+  els.loadingText.textContent = shouldFetchLive ? "Checking live UPC database" : "Checking local product profiles";
+
+  const liveProduct = shouldFetchLive ? await fetchOpenFoodFactsProduct(code) : null;
+  const product = mergeLiveProduct(localProduct, liveProduct, code || query);
+
+  if (!hasPriceProfile(product)) {
     els.progressBar.style.width = "100%";
-    window.setTimeout(() => setMode(currentProduct ? "result" : "empty"), 1300);
+    els.loadingText.textContent = liveProduct ? "Found product data" : "No live product data found";
+    window.setTimeout(() => renderProduct(product), 450);
     return;
   }
+
   simulateLookup(product);
 }
 
