@@ -160,7 +160,9 @@ function defaultProfile() {
       { id: makeId("group"), name: "Snacks for Derek", items: [] }
     ],
     history: [],
-    saved: []
+    saved: [],
+    archivedGroups: [],
+    archivedSaved: []
   };
 }
 
@@ -180,6 +182,8 @@ function loadProfile() {
   }
   profile.history = Array.isArray(profile.history) ? profile.history : [];
   profile.saved = Array.isArray(profile.saved) ? profile.saved : [];
+  profile.archivedGroups = Array.isArray(profile.archivedGroups) ? profile.archivedGroups : [];
+  profile.archivedSaved = Array.isArray(profile.archivedSaved) ? profile.archivedSaved : [];
   basket = activeGroup().items;
 }
 
@@ -240,6 +244,38 @@ function saveProduct(product) {
     saveProfile();
   }
   renderSaved();
+  renderProfile();
+}
+
+function archiveSavedProduct(upc) {
+  const product = profile.saved.find((item) => item.upc === upc);
+  if (!product) return;
+
+  profile.saved = profile.saved.filter((item) => item.upc !== upc);
+  profile.archivedSaved.unshift({ ...product, archivedAt: new Date().toISOString() });
+  saveProfile();
+  renderSaved();
+  renderProfile();
+}
+
+function restoreArchivedSaved(upc) {
+  const product = profile.archivedSaved.find((item) => item.upc === upc);
+  if (!product) return;
+
+  profile.archivedSaved = profile.archivedSaved.filter((item) => item.upc !== upc);
+  profile.saved.unshift(product);
+  saveProfile();
+  renderSaved();
+  renderProfile();
+}
+
+function deleteArchivedSaved(upc) {
+  const product = profile.archivedSaved.find((item) => item.upc === upc);
+  if (!product) return;
+  if (!window.confirm(`Permanently delete archived product "${product.name}"?`)) return;
+
+  profile.archivedSaved = profile.archivedSaved.filter((item) => item.upc !== upc);
+  saveProfile();
   renderProfile();
 }
 
@@ -729,12 +765,13 @@ function createGroup(name) {
   renderProfile();
 }
 
-function deleteGroup(groupId) {
+function archiveGroup(groupId) {
   if (profile.groups.length <= 1) return;
   const group = profile.groups.find((item) => item.id === groupId);
   if (!group) return;
-  if (!window.confirm(`Delete "${group.name}" and its ${basketLabel(group.items.length)}?`)) return;
+  if (!window.confirm(`Archive "${group.name}" and its ${basketLabel(group.items.length)}?`)) return;
 
+  profile.archivedGroups.unshift({ ...group, archivedAt: new Date().toISOString() });
   profile.groups = profile.groups.filter((item) => item.id !== groupId);
   if (profile.activeGroupId === groupId) {
     profile.activeGroupId = profile.groups[0].id;
@@ -743,6 +780,34 @@ function deleteGroup(groupId) {
   saveProfile();
   renderBasket();
   renderGroupCards();
+  renderProfile();
+}
+
+function restoreArchivedGroup(groupId) {
+  const group = profile.archivedGroups.find((item) => item.id === groupId);
+  if (!group) return;
+
+  profile.archivedGroups = profile.archivedGroups.filter((item) => item.id !== groupId);
+  profile.groups.push({
+    id: group.id,
+    name: group.name,
+    items: Array.isArray(group.items) ? group.items : []
+  });
+  profile.activeGroupId = group.id;
+  basket = activeGroup().items;
+  saveProfile();
+  renderBasket();
+  renderGroupCards();
+  renderProfile();
+}
+
+function deleteArchivedGroup(groupId) {
+  const group = profile.archivedGroups.find((item) => item.id === groupId);
+  if (!group) return;
+  if (!window.confirm(`Permanently delete archived list "${group.name}"?`)) return;
+
+  profile.archivedGroups = profile.archivedGroups.filter((item) => item.id !== groupId);
+  saveProfile();
   renderProfile();
 }
 
@@ -777,7 +842,7 @@ function renderGroupCards() {
           <div class="card-actions">
             <button class="ghost-btn" type="button" data-open-group="${group.id}">Open</button>
             <button class="ghost-btn" type="button" data-seed-group="${group.id}">Demo</button>
-            <button class="ghost-btn danger-btn" type="button" data-delete-group="${group.id}" ${profile.groups.length <= 1 ? "disabled" : ""}>Delete</button>
+            <button class="ghost-btn archive-btn" type="button" data-archive-group="${group.id}" ${profile.groups.length <= 1 ? "disabled" : ""}>Archive</button>
           </div>
         </header>
         <div class="basket-list">
@@ -826,6 +891,7 @@ function productListCard(product, source) {
       <div class="card-actions">
         <button class="ghost-btn" type="button" data-relookup="${product.upc}">View</button>
         ${hasPriceProfile(product) ? `<button class="ghost-btn" type="button" data-add-snapshot="${product.upc}" data-source="${source}">Add</button>` : ""}
+        ${source === "saved" ? `<button class="ghost-btn archive-btn" type="button" data-archive-saved="${product.upc}">Archive</button>` : ""}
       </div>
     </article>
   `;
@@ -836,12 +902,50 @@ function renderProfile() {
   if (els.profileButton) els.profileButton.title = `Profile: ${profile.name}`;
   if (els.profileNameInput) els.profileNameInput.value = profile.name;
   if (!els.profileStats) return;
+  const archivedGroups = profile.archivedGroups.map((group) => `
+    <article class="archive-row">
+      <div>
+        <strong>${group.name}</strong>
+        <p class="subtle">${basketLabel(Array.isArray(group.items) ? group.items.length : 0)} archived ${new Date(group.archivedAt).toLocaleDateString()}</p>
+      </div>
+      <div class="card-actions">
+        <button class="ghost-btn" type="button" data-restore-group="${group.id}">Restore</button>
+        <button class="ghost-btn danger-btn" type="button" data-delete-archived-group="${group.id}">Delete</button>
+      </div>
+    </article>
+  `).join("");
+  const archivedSaved = profile.archivedSaved.map((product) => `
+    <article class="archive-row">
+      <div>
+        <strong>${product.name}</strong>
+        <p class="subtle">${product.brand} - ${product.size} archived ${new Date(product.archivedAt).toLocaleDateString()}</p>
+      </div>
+      <div class="card-actions">
+        <button class="ghost-btn" type="button" data-restore-saved="${product.upc}">Restore</button>
+        <button class="ghost-btn danger-btn" type="button" data-delete-archived-saved="${product.upc}">Delete</button>
+      </div>
+    </article>
+  `).join("");
   els.profileStats.innerHTML = `
     <article class="profile-card">
       <strong>${profile.name}</strong>
       <p class="subtle">Local-only profile. Email sync can come later.</p>
-      <p>${profile.groups.length} list groups - ${profile.history.length} recent scans - ${profile.saved.length} saved products</p>
+      <p>${profile.groups.length} list groups - ${profile.history.length} recent scans - ${profile.saved.length} saved products - ${profile.archivedGroups.length + profile.archivedSaved.length} archived items</p>
     </article>
+    <section class="archive-section">
+      <div class="section-heading">
+        <h3>Archived lists</h3>
+        <span>${profile.archivedGroups.length}</span>
+      </div>
+      ${archivedGroups || `<div class="basket-empty">Archived lists will appear here.</div>`}
+    </section>
+    <section class="archive-section">
+      <div class="section-heading">
+        <h3>Archived saved products</h3>
+        <span>${profile.archivedSaved.length}</span>
+      </div>
+      ${archivedSaved || `<div class="basket-empty">Archived saved products will appear here.</div>`}
+    </section>
   `;
 }
 
@@ -1044,13 +1148,13 @@ els.groupCards?.addEventListener("click", (event) => {
   const openButton = event.target.closest("[data-open-group]");
   const seedButton = event.target.closest("[data-seed-group]");
   const renameButton = event.target.closest("[data-rename-group]");
-  const deleteButton = event.target.closest("[data-delete-group]");
+  const archiveButton = event.target.closest("[data-archive-group]");
   if (renameButton) {
     renameGroup(renameButton.dataset.renameGroup);
     return;
   }
-  if (deleteButton) {
-    deleteGroup(deleteButton.dataset.deleteGroup);
+  if (archiveButton) {
+    archiveGroup(archiveButton.dataset.archiveGroup);
     return;
   }
   if (openButton) {
@@ -1073,6 +1177,7 @@ els.groupCards?.addEventListener("click", (event) => {
 function handleProductListAction(event) {
   const relookup = event.target.closest("[data-relookup]");
   const addSnapshot = event.target.closest("[data-add-snapshot]");
+  const archiveSaved = event.target.closest("[data-archive-saved]");
   if (relookup) {
     switchView("scan");
     lookup(relookup.dataset.relookup);
@@ -1082,9 +1187,20 @@ function handleProductListAction(event) {
     const product = source.find((item) => item.upc === addSnapshot.dataset.addSnapshot);
     if (product) addProductToBasket(product);
   }
+  if (archiveSaved) archiveSavedProduct(archiveSaved.dataset.archiveSaved);
 }
 els.historyList?.addEventListener("click", handleProductListAction);
 els.savedList?.addEventListener("click", handleProductListAction);
+els.profileStats?.addEventListener("click", (event) => {
+  const restoreGroup = event.target.closest("[data-restore-group]");
+  const restoreSaved = event.target.closest("[data-restore-saved]");
+  const deleteGroup = event.target.closest("[data-delete-archived-group]");
+  const deleteSaved = event.target.closest("[data-delete-archived-saved]");
+  if (restoreGroup) restoreArchivedGroup(restoreGroup.dataset.restoreGroup);
+  if (restoreSaved) restoreArchivedSaved(restoreSaved.dataset.restoreSaved);
+  if (deleteGroup) deleteArchivedGroup(deleteGroup.dataset.deleteArchivedGroup);
+  if (deleteSaved) deleteArchivedSaved(deleteSaved.dataset.deleteArchivedSaved);
+});
 document.querySelectorAll("[data-code]").forEach((button) => {
   button.addEventListener("click", () => lookup(button.dataset.code));
 });
