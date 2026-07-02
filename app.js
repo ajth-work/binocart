@@ -729,6 +729,23 @@ function createGroup(name) {
   renderProfile();
 }
 
+function deleteGroup(groupId) {
+  if (profile.groups.length <= 1) return;
+  const group = profile.groups.find((item) => item.id === groupId);
+  if (!group) return;
+  if (!window.confirm(`Delete "${group.name}" and its ${basketLabel(group.items.length)}?`)) return;
+
+  profile.groups = profile.groups.filter((item) => item.id !== groupId);
+  if (profile.activeGroupId === groupId) {
+    profile.activeGroupId = profile.groups[0].id;
+  }
+  basket = activeGroup().items;
+  saveProfile();
+  renderBasket();
+  renderGroupCards();
+  renderProfile();
+}
+
 function renderGroupCards() {
   if (!els.groupCards) return;
   els.groupCards.innerHTML = profile.groups.map((group) => {
@@ -744,6 +761,7 @@ function renderGroupCards() {
           <div class="card-actions">
             <button class="ghost-btn" type="button" data-open-group="${group.id}">Open</button>
             <button class="ghost-btn" type="button" data-seed-group="${group.id}">Demo</button>
+            <button class="ghost-btn danger-btn" type="button" data-delete-group="${group.id}" ${profile.groups.length <= 1 ? "disabled" : ""}>Delete</button>
           </div>
         </header>
         <div class="basket-list">
@@ -1009,6 +1027,11 @@ els.saveCurrent?.addEventListener("click", () => {
 els.groupCards?.addEventListener("click", (event) => {
   const openButton = event.target.closest("[data-open-group]");
   const seedButton = event.target.closest("[data-seed-group]");
+  const deleteButton = event.target.closest("[data-delete-group]");
+  if (deleteButton) {
+    deleteGroup(deleteButton.dataset.deleteGroup);
+    return;
+  }
   if (openButton) {
     profile.activeGroupId = openButton.dataset.openGroup;
     basket = activeGroup().items;

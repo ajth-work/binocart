@@ -85,6 +85,20 @@ function createGroup(name = "New list") {
   renderCurrentPage();
 }
 
+function deleteGroup(groupId) {
+  if (profile.groups.length <= 1) return;
+  const group = profile.groups.find((item) => item.id === groupId);
+  if (!group) return;
+  if (!window.confirm(`Delete "${group.name}" and its ${basketLabel(group.items.length)}?`)) return;
+
+  profile.groups = profile.groups.filter((item) => item.id !== groupId);
+  if (profile.activeGroupId === groupId) {
+    profile.activeGroupId = profile.groups[0].id;
+  }
+  saveProfile();
+  renderCurrentPage();
+}
+
 function addProductToActiveGroup(product) {
   const group = profile.groups.find((item) => item.id === profile.activeGroupId) || profile.groups[0];
   if (!group.items.some((item) => item.upc === product.upc)) group.items.push(product);
@@ -127,6 +141,7 @@ function renderGroups() {
           </div>
           <div class="card-actions">
             <a class="ghost-btn" href="index.html?group=${encodeURIComponent(group.id)}">Open</a>
+            <button class="ghost-btn danger-btn" type="button" data-delete-group="${group.id}" ${profile.groups.length <= 1 ? "disabled" : ""}>Delete</button>
           </div>
         </header>
         <div class="basket-list">
@@ -186,6 +201,11 @@ function handleProductAction(event) {
   if (product) addProductToActiveGroup(product);
 }
 
+function handleGroupAction(event) {
+  const deleteButton = event.target.closest("[data-delete-group]");
+  if (deleteButton) deleteGroup(deleteButton.dataset.deleteGroup);
+}
+
 loadProfile();
 renderCurrentPage();
 
@@ -203,3 +223,4 @@ els.profileForm?.addEventListener("submit", (event) => {
 });
 els.historyList?.addEventListener("click", handleProductAction);
 els.savedList?.addEventListener("click", handleProductAction);
+els.groupCards?.addEventListener("click", handleGroupAction);
