@@ -1,6 +1,10 @@
-# PriceScout
+# BinoCart
 
-PriceScout is a mobile-first grocery barcode scanning app prototype. The goal is to let someone scan a product in a store, confirm what item was found, compare nearby prices, save repeat purchases, and build shopping lists that can be optimized for one store or multiple stores.
+BinoCart is a mobile-first independent shopping intelligence prototype. The goal is to let someone scan a product in a store, confirm what item was found, compare nearby prices, understand timing and convenience tradeoffs, save repeat purchases, and build shopping lists that can be optimized for one store or multiple stores.
+
+Bino is the intelligence behind BinoCart. Bino should feel helpful, calm, trustworthy, objective, and focused on guiding shoppers instead of persuading them.
+
+Promise: Never wonder if you're making the right shopping decision.
 
 The current build is a static web app intended for GitHub Pages hosting.
 

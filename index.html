@@ -3,12 +3,20 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>PriceScout - Scan</title>
+    <title>BinoCart - Scan</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body data-page="scan">
     <header class="app-nav">
-      <a class="brand-mark" href="index.html"><strong>PriceScout</strong></a>
+      <a class="brand-mark" href="index.html" aria-label="BinoCart home">
+        <span class="bino-logo" aria-hidden="true">
+          <span class="bino-lens left"><span></span><span></span><span></span></span>
+          <span class="bino-bridge"></span>
+          <span class="bino-lens right"><span></span><span></span><span></span></span>
+          <span class="bino-smile"></span>
+        </span>
+        <strong><span>Bino</span><span>Cart</span></strong>
+      </a>
       <nav aria-label="Primary">
         <a class="nav-btn active" href="index.html">Scan</a>
         <a class="nav-btn" href="list.html">List</a>
@@ -25,8 +33,8 @@
       <section class="scanner-pane" aria-label="Barcode scanner">
         <header class="topbar">
           <div>
-            <p class="eyebrow">PriceScout</p>
-            <h1>Scan. Compare. Buy smarter.</h1>
+            <p class="eyebrow">BinoCart</p>
+            <h1>See better prices. Save more.</h1>
           </div>
           <div class="location-pill" aria-label="Current market">
             <span class="dot"></span>
@@ -101,7 +109,7 @@
         <div id="emptyState" class="empty-state">
           <p class="eyebrow">Waiting for a scan</p>
           <h2>Point the camera at a barcode or try a demo product.</h2>
-          <p>PriceScout will compare local prices, show the recent trend, and suggest a cheaper nearby alternative.</p>
+          <p>Bino compares price, timing, and convenience so you can make the right shopping decision with confidence.</p>
         </div>
 
         <div id="loadingState" class="loading-state hidden">
@@ -129,7 +137,7 @@
 
           <div class="hero-metrics">
             <div>
-              <span class="metric-label">Best local</span>
+              <span class="metric-label">Best decision</span>
               <strong id="bestPrice">$0.00</strong>
               <span id="bestStore"></span>
             </div>
@@ -167,7 +175,7 @@
           </section>
 
           <section class="alternative-section">
-            <h3>Store-brand swap</h3>
+            <h3>Bino swap</h3>
             <div id="alternativeCard" class="alternative-card"></div>
           </section>
         </article>

@@ -1,4 +1,5 @@
-const profileKey = "pricescout.profile.v1";
+const profileKey = "binocart.profile.v1";
+const legacyProfileKey = "pricescout.profile.v1";
 
 const els = {
   profileName: document.querySelector("#profileName"),
@@ -40,7 +41,7 @@ function defaultProfile() {
 
 function loadProfile() {
   try {
-    const stored = JSON.parse(localStorage.getItem(profileKey));
+    const stored = JSON.parse(localStorage.getItem(profileKey) || localStorage.getItem(legacyProfileKey));
     profile = stored?.id ? stored : defaultProfile();
   } catch (error) {
     profile = defaultProfile();

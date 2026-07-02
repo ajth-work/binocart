@@ -13,7 +13,7 @@ const products = {
     ],
     history: [4.79, 4.69, 4.59, 4.49, 4.29, 3.98],
     alternative: { name: "Friendly Farms Oatmilk", store: "Aldi", price: 2.95 },
-    insight: "This is a good time to buy: the best local price is down 17% from its six-month high, and Aldi has an even cheaper store-brand option."
+    insight: "Bino sees a strong buy signal: today's best decision price is down 17% from its six-month high, and Aldi has an even cheaper store-brand option."
   },
   "041570052057": {
     upc: "041570052057",
@@ -138,7 +138,8 @@ let basket = [];
 let optimizerMode = "single";
 let activeViewName = "scan";
 const viewScrollPositions = {};
-const profileKey = "pricescout.profile.v1";
+const profileKey = "binocart.profile.v1";
+const legacyProfileKey = "pricescout.profile.v1";
 
 function money(value) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value);
@@ -165,7 +166,7 @@ function defaultProfile() {
 
 function loadProfile() {
   try {
-    const stored = JSON.parse(localStorage.getItem(profileKey));
+    const stored = JSON.parse(localStorage.getItem(profileKey) || localStorage.getItem(legacyProfileKey));
     profile = stored?.id ? stored : defaultProfile();
   } catch (error) {
     profile = defaultProfile();
@@ -374,8 +375,8 @@ function mergeLiveProduct(localProduct, liveProduct, code) {
       history: [],
       alternative: null,
       insight: liveProduct.confidence === "brand-prefix"
-        ? "PriceScout recognized the manufacturer prefix, but still needs an exact product match or local price confirmations for this package."
-        : "Product data was found live, but PriceScout has not collected local price history for this item yet."
+        ? "Bino recognized the manufacturer prefix, but still needs an exact product match or local price confirmations for this package."
+        : "Product data was found live, but BinoCart has not collected local price history for this item yet."
     };
   }
 
@@ -550,7 +551,7 @@ function renderProduct(product) {
   els.productMeta.textContent = `UPC ${product.upc} - ${product.category}`;
   els.productName.textContent = product.name;
   els.productBrand.textContent = `${product.brand} - ${product.size}`;
-  els.productSource.textContent = product.source ? `Live product data from ${product.source}` : "Seeded PriceScout profile";
+  els.productSource.textContent = product.source ? `Live product data from ${product.source}` : "Seeded BinoCart profile";
   els.productImage.classList.toggle("hidden", !product.imageUrl);
   if (product.imageUrl) {
     els.productImage.src = product.imageUrl;
@@ -578,7 +579,7 @@ function renderProduct(product) {
       </div>
       <strong>${money(product.alternative.price)}</strong>
     `
-    : `<div><strong>No store-brand swap yet</strong><p>PriceScout can suggest one after local price data exists for this item.</p></div>`;
+    : `<div><strong>No Bino swap yet</strong><p>Bino can suggest one after local price data exists for this item.</p></div>`;
 
   renderStores(product);
   renderChart(product);
