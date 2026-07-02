@@ -746,6 +746,19 @@ function deleteGroup(groupId) {
   renderProfile();
 }
 
+function renameGroup(groupId) {
+  const group = profile.groups.find((item) => item.id === groupId);
+  if (!group) return;
+  const nextName = window.prompt("Rename list", group.name)?.trim();
+  if (!nextName || nextName === group.name) return;
+
+  group.name = nextName;
+  saveProfile();
+  renderBasket();
+  renderGroupCards();
+  renderProfile();
+}
+
 function renderGroupCards() {
   if (!els.groupCards) return;
   els.groupCards.innerHTML = profile.groups.map((group) => {
@@ -755,7 +768,10 @@ function renderGroupCards() {
       <article class="group-card">
         <header>
           <div>
-            <h3>${group.name}</h3>
+            <div class="group-title-row">
+              <h3>${group.name}</h3>
+              <button class="icon-edit-btn" type="button" data-rename-group="${group.id}" aria-label="Rename ${group.name}" title="Rename list">&#9998;</button>
+            </div>
             <p class="subtle">${basketLabel(group.items.length)} - best-item total ${money(total)}</p>
           </div>
           <div class="card-actions">
@@ -1027,7 +1043,12 @@ els.saveCurrent?.addEventListener("click", () => {
 els.groupCards?.addEventListener("click", (event) => {
   const openButton = event.target.closest("[data-open-group]");
   const seedButton = event.target.closest("[data-seed-group]");
+  const renameButton = event.target.closest("[data-rename-group]");
   const deleteButton = event.target.closest("[data-delete-group]");
+  if (renameButton) {
+    renameGroup(renameButton.dataset.renameGroup);
+    return;
+  }
   if (deleteButton) {
     deleteGroup(deleteButton.dataset.deleteGroup);
     return;

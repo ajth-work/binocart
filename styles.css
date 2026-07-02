@@ -678,6 +678,37 @@ h3 {
   align-items: center;
 }
 
+.group-title-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.group-title-row h3 {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.icon-edit-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
+  border: 1px solid rgba(154, 167, 184, 0.2);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--muted);
+  font-size: 0.86rem;
+  font-weight: 900;
+}
+
+.icon-edit-btn:hover {
+  border-color: rgba(46, 204, 113, 0.45);
+  color: var(--green);
+}
+
 .history-product {
   display: flex;
   gap: 12px;

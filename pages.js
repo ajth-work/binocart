@@ -99,6 +99,17 @@ function deleteGroup(groupId) {
   renderCurrentPage();
 }
 
+function renameGroup(groupId) {
+  const group = profile.groups.find((item) => item.id === groupId);
+  if (!group) return;
+  const nextName = window.prompt("Rename list", group.name)?.trim();
+  if (!nextName || nextName === group.name) return;
+
+  group.name = nextName;
+  saveProfile();
+  renderCurrentPage();
+}
+
 function addProductToActiveGroup(product) {
   const group = profile.groups.find((item) => item.id === profile.activeGroupId) || profile.groups[0];
   if (!group.items.some((item) => item.upc === product.upc)) group.items.push(product);
@@ -136,7 +147,10 @@ function renderGroups() {
       <article class="group-card">
         <header>
           <div>
-            <h3>${group.name}</h3>
+            <div class="group-title-row">
+              <h3>${group.name}</h3>
+              <button class="icon-edit-btn" type="button" data-rename-group="${group.id}" aria-label="Rename ${group.name}" title="Rename list">&#9998;</button>
+            </div>
             <p class="subtle">${basketLabel(group.items.length)} - best-item total ${money(total)}</p>
           </div>
           <div class="card-actions">
@@ -202,7 +216,9 @@ function handleProductAction(event) {
 }
 
 function handleGroupAction(event) {
+  const renameButton = event.target.closest("[data-rename-group]");
   const deleteButton = event.target.closest("[data-delete-group]");
+  if (renameButton) renameGroup(renameButton.dataset.renameGroup);
   if (deleteButton) deleteGroup(deleteButton.dataset.deleteGroup);
 }
 
