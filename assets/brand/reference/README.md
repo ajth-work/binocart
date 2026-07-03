@@ -6,6 +6,8 @@ This folder stores reference mockups for the BinoCart visual identity.
 
 - `binocart-brand-board.jpg` - full brand board with logo lockups, icon variations, mascot expressions, colors, typography, and usage examples.
 - `binocart-logo-workup.jpg` - focused logo, mascot, app icon, and feature icon workup.
+- `raw/` - original uploaded screenshot crops, preserved as source reference.
+- `crops/` - larger reference sections copied into semantic filenames for easier browsing.
 
 ## Asset Types Shown In The References
 
