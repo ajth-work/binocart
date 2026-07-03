@@ -1,0 +1,13 @@
+{
+  "appId": "com.binocart.app",
+  "appName": "BinoCart",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "allowMixedContent": false,
+    "captureInput": true,
+    "webContentsDebuggingEnabled": true
+  }
+}

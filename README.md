@@ -93,6 +93,46 @@ Most mobile browsers require HTTPS before allowing camera access. GitHub Pages p
 
 Some browsers do not support the native `BarcodeDetector` API yet. The planned fallback is ZXing or html5-qrcode.
 
+## Android With Capacitor
+
+BinoCart is being prepared for Android through Capacitor so the current web app can become a native Android project without discarding the prototype.
+
+Install dependencies once:
+
+```powershell
+npm install
+```
+
+Capacitor 7 requires Node 20. If your system Node is older, the project scripts automatically run Capacitor through an ephemeral Node 20 runtime with `npx -p node@20`.
+
+Build the web bundle for Capacitor:
+
+```powershell
+npm run build:web
+```
+
+Create the Android project after dependencies are installed:
+
+```powershell
+npm run android:add
+```
+
+After web changes, sync them into Android:
+
+```powershell
+npm run cap:sync
+```
+
+Open the native Android project:
+
+```powershell
+npm run android:open
+```
+
+OpenAI/OCR credentials for receipt processing should live on a backend, not in the Android app. See `docs/receipt-processing-api.md` for the planned API contract.
+
+To build an APK or run on a device, install Android Studio with a current Android SDK and JDK. This machine currently has Java 8, which is too old for modern Android Gradle builds.
+
 ## GitHub Pages
 
 In the GitHub repo settings:

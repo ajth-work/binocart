@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">BinoCart</string>
+    <string name="title_activity_main">BinoCart</string>
+    <string name="package_name">com.binocart.app</string>
+    <string name="custom_url_scheme">com.binocart.app</string>
+</resources>
