@@ -46,6 +46,76 @@ const products = {
     history: [4.99, 5.29, 5.49, 5.79, 6.19, 5.88],
     alternative: { name: "Up & Up Facial Tissues", store: "Target", price: 4.89 },
     insight: "Prices are still elevated versus earlier months, so only buy the name brand if you need it now; the Target store brand is the better value."
+  },
+  "000000000001": {
+    upc: "000000000001",
+    name: "Whole Milk",
+    brand: "Generic",
+    size: "1 Gallon",
+    category: "Dairy",
+    stores: [
+      { name: "Aldi", price: 3.05, distance: "4.4 mi", confidence: "Updated today" },
+      { name: "Walmart", price: 3.12, distance: "2.5 mi", confidence: "Updated 1 hr ago" },
+      { name: "Kroger", price: 3.29, distance: "1.2 mi", confidence: "Updated today" }
+    ],
+    history: [3.45, 3.35, 3.25, 3.15, 3.10, 3.12],
+    insight: "Milk prices have stabilized after a spring peak. Walmart and Aldi are neck-and-neck."
+  },
+  "000000000002": {
+    upc: "000000000002",
+    name: "White Bread",
+    brand: "Generic",
+    size: "20 oz Loaf",
+    category: "Bakery",
+    stores: [
+      { name: "Aldi", price: 1.29, distance: "4.4 mi", confidence: "Updated today" },
+      { name: "Walmart", price: 1.35, distance: "2.5 mi", confidence: "Updated today" },
+      { name: "Meijer", price: 1.49, distance: "3.1 mi", confidence: "Updated yesterday" }
+    ],
+    history: [1.19, 1.19, 1.25, 1.29, 1.29, 1.29],
+    insight: "Bread is up 8% this year. Aldi remains the most affordable option for staples."
+  },
+  "000000000003": {
+    upc: "000000000003",
+    name: "Bananas",
+    brand: "Produce",
+    size: "1 lb",
+    category: "Produce",
+    stores: [
+      { name: "Walmart", price: 0.48, distance: "2.5 mi", confidence: "Updated 1 hr ago" },
+      { name: "Aldi", price: 0.49, distance: "4.4 mi", confidence: "Updated today" },
+      { name: "Kroger", price: 0.55, distance: "1.2 mi", confidence: "Updated today" }
+    ],
+    history: [0.44, 0.44, 0.46, 0.48, 0.48, 0.48],
+    insight: "Bananas are the ultimate stable-price item. Meijer is slightly higher today."
+  },
+  "000000000004": {
+    upc: "000000000004",
+    name: "Unsalted Butter",
+    brand: "Generic",
+    size: "16 oz (4 sticks)",
+    category: "Dairy",
+    stores: [
+      { name: "Aldi", price: 3.49, distance: "4.4 mi", confidence: "Updated today" },
+      { name: "Walmart", price: 3.68, distance: "2.5 mi", confidence: "Updated today" },
+      { name: "Kroger", price: 4.29, distance: "1.2 mi", confidence: "Updated today" }
+    ],
+    history: [3.99, 3.89, 3.79, 3.69, 3.59, 3.49],
+    insight: "Butter has seen a significant price drop lately. Great time to stock up at Aldi."
+  },
+  "000000000005": {
+    upc: "000000000005",
+    name: "Boneless Skinless Chicken Breast",
+    brand: "Produce",
+    size: "1 lb",
+    category: "Meat",
+    stores: [
+      { name: "Aldi", price: 2.49, distance: "4.4 mi", confidence: "Updated today" },
+      { name: "Walmart", price: 2.67, distance: "2.5 mi", confidence: "Updated today" },
+      { name: "Meijer", price: 2.99, distance: "3.1 mi", confidence: "Updated 4 hr ago" }
+    ],
+    history: [3.29, 3.19, 2.99, 2.89, 2.69, 2.49],
+    insight: "Meat prices are fluctuating. Aldi's current price is a 6-month low."
   }
 };
 
@@ -57,7 +127,13 @@ const aliases = {
   "peanut butter": "041570052057",
   tissue: "036000291452",
   tissues: "036000291452",
-  towels: "036000291452"
+  towels: "036000291452",
+  milk: "000000000001",
+  bread: "000000000002",
+  bananas: "000000000003",
+  banana: "000000000003",
+  butter: "000000000004",
+  chicken: "000000000005"
 };
 
 const els = {
@@ -96,10 +172,13 @@ const els = {
   addToBasket: document.querySelector("#addToBasket"),
   saveProduct: document.querySelector("#saveProduct"),
   basketCount: document.querySelector("#basketCount"),
+  basketTotal: document.querySelector("#basketTotal"),
+  basketStores: document.querySelector("#basketStores"),
   basketList: document.querySelector("#basketList"),
   seedBasket: document.querySelector("#seedBasket"),
   clearBasket: document.querySelector("#clearBasket"),
   optimizerPanel: document.querySelector("#optimizerPanel"),
+  scannerSection: document.querySelector("#scannerSection"),
   singleStoreMode: document.querySelector("#singleStoreMode"),
   multiStoreMode: document.querySelector("#multiStoreMode"),
   optimizedTotal: document.querySelector("#optimizedTotal"),
@@ -123,7 +202,148 @@ const els = {
   historyList: document.querySelector("#historyList"),
   clearHistory: document.querySelector("#clearHistory"),
   savedList: document.querySelector("#savedList"),
-  saveCurrent: document.querySelector("#saveCurrent")
+  saveCurrent: document.querySelector("#saveCurrent"),
+  breakdownModal: document.querySelector("#breakdownModal"),
+  breakdownSummary: document.querySelector("#breakdownSummary"),
+  storeDrilldown: document.querySelector("#storeDrilldown"),
+  drilldownList: document.querySelector("#drilldownList"),
+  drilldownStoreName: document.querySelector("#drilldownStoreName"),
+  backToSummary: document.querySelector("#backToSummary"),
+  closeModal: document.querySelector("#closeModal"),
+  modalTitle: document.querySelector("#modalTitle"),
+  modalIcon: document.querySelector("#modalIcon"),
+  navStyleToggle: document.querySelector("#navStyleToggle"),
+  plusButtonToggle: document.querySelector("#plusButtonToggle"),
+  navPlusAction: document.querySelector("#navPlusAction"),
+  actionOverlay: document.querySelector("#actionOverlay"),
+  closeActions: document.querySelector("#closeActions"),
+  actionBarcodeScan: document.querySelector("#actionBarcodeScan")
+};
+
+const pulseData = {
+  eggs: {
+    name: "Eggs (Large, Dozen)",
+    icon: "🥚",
+    shelfLife: 21,
+    stores: [
+      {
+        name: "Aldi",
+        distance: "1.2 mi",
+        options: [
+          { brand: "Friendly Farms", price: 1.89, analysis: "Industry-leading price for standard grade A large eggs." },
+          { brand: "Goldhen (Free Range)", price: 3.49, analysis: "Premium for certified humane cage-free status." }
+        ]
+      },
+      {
+        name: "Walmart",
+        distance: "2.5 mi",
+        options: [
+          { brand: "Great Value", price: 1.94, analysis: "Consistent stock, high-volume value option." },
+          { brand: "Eggland's Best", price: 4.12, analysis: "Brand premium for added Omega-3 claims." }
+        ]
+      },
+      {
+        name: "Kroger",
+        distance: "0.8 mi",
+        options: [
+          { brand: "Kroger Brand", price: 2.19, analysis: "Standard value, often discounted via loyalty app." }
+        ]
+      }
+    ]
+  },
+  bread: {
+    name: "White Bread (Loaf)",
+    icon: "🍞",
+    shelfLife: 7,
+    stores: [
+      {
+        name: "Aldi",
+        distance: "1.2 mi",
+        options: [
+          { brand: "L'oven Fresh", price: 1.29, analysis: "Lowest possible price point for sandwich staples." },
+          { brand: "Specially Selected Brioche", price: 3.99, analysis: "Gourmet recipe, higher fat and sugar content." }
+        ]
+      },
+      {
+        name: "Walmart",
+        distance: "2.5 mi",
+        options: [
+          { brand: "Great Value", price: 1.35, analysis: "Direct competitor to Aldi's staple loaf." },
+          { brand: "Nature's Own", price: 3.48, analysis: "No high fructose corn syrup, cleaner label." }
+        ]
+      },
+      {
+        name: "Meijer",
+        distance: "3.1 mi",
+        options: [
+          { brand: "Meijer Brand", price: 1.49, analysis: "Solid regional value for daily use." }
+        ]
+      }
+    ]
+  },
+  milk: {
+    name: "Whole Milk (Gallon)",
+    icon: "🥛",
+    shelfLife: 10,
+    stores: [
+      {
+        name: "Aldi",
+        distance: "1.2 mi",
+        options: [
+          { brand: "Friendly Farms", price: 3.05, analysis: "Consistently undercuts big-box retailers by cents." }
+        ]
+      },
+      {
+        name: "Walmart",
+        distance: "2.5 mi",
+        options: [
+          { brand: "Great Value", price: 3.12, analysis: "Highest turnover ensures maximum freshness." }
+        ]
+      }
+    ]
+  },
+  bananas: {
+    name: "Bananas (lb)",
+    icon: "🍌",
+    shelfLife: 5,
+    stores: [
+      {
+        name: "Walmart",
+        distance: "2.5 mi",
+        options: [
+          { brand: "Produce", price: 0.48, analysis: "Loss-leader pricing to drive foot traffic." }
+        ]
+      },
+      {
+        name: "Aldi",
+        distance: "1.2 mi",
+        options: [
+          { brand: "Produce", price: 0.49, analysis: "Standard competitive pricing." }
+        ]
+      }
+    ]
+  },
+  butter: {
+    name: "Unsalted Butter (16oz)",
+    icon: "🧈",
+    shelfLife: 30,
+    stores: [
+      {
+        name: "Aldi",
+        distance: "1.2 mi",
+        options: [
+          { brand: "Countryside Creamery", price: 3.49, analysis: "Exceptional value for baking needs." }
+        ]
+      },
+      {
+        name: "Kroger",
+        distance: "0.8 mi",
+        options: [
+          { brand: "Kroger Brand", price: 4.29, analysis: "Premium over Aldi/Walmart unless on sale." }
+        ]
+      }
+    ]
+  }
 };
 
 let stream = null;
@@ -164,7 +384,11 @@ function defaultProfile() {
     archivedGroups: [],
     archivedSaved: [],
     receipts: [],
-    priceObservations: []
+    priceObservations: [],
+    showMenuLabels: false,
+    menuBlur: 2,
+    navStyle: "fab",
+    showPlusButton: false
   };
 }
 
@@ -188,6 +412,14 @@ function loadProfile() {
   profile.archivedSaved = Array.isArray(profile.archivedSaved) ? profile.archivedSaved : [];
   profile.receipts = Array.isArray(profile.receipts) ? profile.receipts : [];
   profile.priceObservations = Array.isArray(profile.priceObservations) ? profile.priceObservations : [];
+  profile.showMenuLabels = typeof profile.showMenuLabels === "boolean" ? profile.showMenuLabels : false;
+  profile.menuBlur = typeof profile.menuBlur === "number" ? profile.menuBlur : 2;
+  profile.navStyle = "navbar";
+  profile.showPlusButton = false;
+
+  document.body?.classList.toggle("nav-style-navbar", profile.navStyle === "navbar");
+  document.body?.classList.toggle("hide-nav-plus", true);
+
   basket = activeGroup().items;
 }
 
@@ -211,7 +443,8 @@ function productSnapshot(product) {
     stores: product.stores || [],
     history: product.history || [],
     alternative: product.alternative || null,
-    insight: product.insight || ""
+    insight: product.insight || "",
+    quantity: Number(product.quantity) > 0 ? Number(product.quantity) : 1
   };
 }
 
@@ -630,6 +863,30 @@ function basketLabel(count) {
   return `${count} ${count === 1 ? "item" : "items"}`;
 }
 
+function itemQuantity(product) {
+  return Number(product?.quantity) > 0 ? Number(product.quantity) : 1;
+}
+
+function basketQuantity(items) {
+  return items.reduce((sum, item) => sum + itemQuantity(item), 0);
+}
+
+function basketBestTotal(items) {
+  return items
+    .filter(hasPriceProfile)
+    .reduce((sum, product) => sum + ((bestStore(product)?.price || 0) * itemQuantity(product)), 0);
+}
+
+function basketStoreSummary(items) {
+  const stores = items.filter(hasPriceProfile).reduce((summary, product) => {
+    const store = bestStore(product);
+    if (!store) return summary;
+    summary[store.name] = (summary[store.name] || 0) + itemQuantity(product);
+    return summary;
+  }, {});
+  return Object.entries(stores).sort(([a], [b]) => a.localeCompare(b));
+}
+
 function productStorePrice(product, storeName) {
   if (!hasPriceProfile(product)) return undefined;
   return product.stores.find((store) => store.name === storeName)?.price;
@@ -641,8 +898,11 @@ function allStoreNames() {
 
 function addProductToBasket(product) {
   const group = activeGroup();
-  if (!group.items.some((item) => item.upc === product.upc)) {
-    group.items.push(productSnapshot(product));
+  const existing = group.items.find((item) => item.upc === product.upc);
+  if (existing) {
+    existing.quantity = itemQuantity(existing) + 1;
+  } else {
+    group.items.push(productSnapshot({ ...product, quantity: 1 }));
   }
   basket = group.items;
   saveProfile();
@@ -665,7 +925,7 @@ function singleStorePlan() {
       product,
       price: productStorePrice(product, storeName)
     })).filter((item) => typeof item.price === "number");
-    const total = items.reduce((sum, item) => sum + item.price, 0);
+    const total = items.reduce((sum, item) => sum + (item.price * itemQuantity(item.product)), 0);
     return { storeName, items, total };
   }).filter((plan) => plan.items.length === basket.length);
 
@@ -675,7 +935,7 @@ function singleStorePlan() {
 function multiStorePlan() {
   const assignments = basket.filter(hasPriceProfile).map((product) => {
     const store = bestStore(product);
-    return { product, storeName: store.name, price: store.price };
+    return { product, storeName: store.name, price: store.price * itemQuantity(product) };
   });
   const grouped = assignments.reduce((groups, item) => {
     groups[item.storeName] = groups[item.storeName] || [];
@@ -724,7 +984,7 @@ function renderOptimizer() {
         <strong>${money(stop.total)}</strong>
       </header>
       <ol>
-        ${stop.items.map((item) => `<li><strong>${item.product.name}</strong> - ${money(item.price)}</li>`).join("")}
+        ${stop.items.map((item) => `<li><strong>${item.product.name}${itemQuantity(item.product) > 1 ? ` x${itemQuantity(item.product)}` : ""}</strong> - ${money(item.price)}</li>`).join("")}
       </ol>
     </article>
   `).join("");
@@ -732,14 +992,26 @@ function renderOptimizer() {
 
 function renderBasket() {
   basket = activeGroup().items;
-  els.basketCount.textContent = basketLabel(basket.length);
+  els.basketCount.textContent = basketLabel(basketQuantity(basket));
+  if (els.basketTotal) {
+    els.basketTotal.textContent = `${money(basketBestTotal(basket))} estimated`;
+  }
+  if (els.basketStores) {
+    const stores = basketStoreSummary(basket);
+    els.basketStores.innerHTML = stores.length
+      ? stores.map(([storeName, count]) => `<span class="store-pill">${storeName}${count > 1 ? ` x${count}` : ""}</span>`).join("")
+      : `<span class="store-pill muted">No stores yet</span>`;
+  }
   if (basket.length === 0) {
-    els.basketList.innerHTML = `<div class="basket-empty">Scan items or add demo products to plan a trip.</div>`;
+    els.basketList.innerHTML = `<div class="basket-empty">Add pulse picks to start building this cart.</div>`;
   } else {
     els.basketList.innerHTML = basket.map((product) => `
       <div class="basket-item">
         <div>
-          <strong>${product.name}</strong>
+          <div class="basket-item-title">
+            <strong>${product.name}</strong>
+            ${itemQuantity(product) > 1 ? `<span class="quantity-badge">x${itemQuantity(product)}</span>` : ""}
+          </div>
           <p>${product.size} - ${hasPriceProfile(product) ? `best ${money(bestStore(product).price)} at ${bestStore(product).name}` : "needs local price"}</p>
         </div>
         <button type="button" data-remove="${product.upc}" aria-label="Remove ${product.name}">x</button>
@@ -832,7 +1104,7 @@ function renderGroupCards() {
   if (!els.groupCards) return;
   els.groupCards.innerHTML = profile.groups.map((group) => {
     const pricedItems = group.items.filter(hasPriceProfile);
-    const total = pricedItems.reduce((sum, product) => sum + (bestStore(product)?.price || 0), 0);
+    const total = pricedItems.reduce((sum, product) => sum + ((bestStore(product)?.price || 0) * itemQuantity(product)), 0);
     return `
       <article class="group-card">
         <header>
@@ -841,7 +1113,7 @@ function renderGroupCards() {
               <h3>${group.name}</h3>
               <button class="icon-edit-btn" type="button" data-rename-group="${group.id}" aria-label="Rename ${group.name}" title="Rename list">&#9998;</button>
             </div>
-            <p class="subtle">${basketLabel(group.items.length)} - best-item total ${money(total)}</p>
+            <p class="subtle">${basketLabel(basketQuantity(group.items))} - best-item total ${money(total)}</p>
           </div>
           <div class="card-actions">
             <button class="ghost-btn" type="button" data-open-group="${group.id}">Open</button>
@@ -853,7 +1125,10 @@ function renderGroupCards() {
           ${group.items.length ? group.items.map((product) => `
             <div class="basket-item">
               <div>
-                <strong>${product.name}</strong>
+                <div class="basket-item-title">
+                  <strong>${product.name}</strong>
+                  ${itemQuantity(product) > 1 ? `<span class="quantity-badge">x${itemQuantity(product)}</span>` : ""}
+                </div>
                 <p>${product.size} - ${hasPriceProfile(product) ? `${money(bestStore(product).price)} at ${bestStore(product).name}` : "needs local price"}</p>
               </div>
             </div>
@@ -905,6 +1180,8 @@ function renderProfile() {
   if (els.profileName) els.profileName.textContent = profile.name;
   if (els.profileButton) els.profileButton.title = `Profile: ${profile.name}`;
   if (els.profileNameInput) els.profileNameInput.value = profile.name;
+  if (els.navStyleToggle) els.navStyleToggle.checked = profile.navStyle === "navbar";
+  if (els.plusButtonToggle) els.plusButtonToggle.checked = profile.showPlusButton;
   if (!els.profileStats) return;
   const archivedGroups = profile.archivedGroups.map((group) => `
     <article class="archive-row">
@@ -993,6 +1270,7 @@ async function lookup(query) {
 
 async function startCamera() {
   clearCameraNotice();
+  els.scannerSection?.classList.remove("hidden");
 
   if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
     showCameraNotice(
@@ -1062,6 +1340,7 @@ function stopCamera() {
   torchSupported = false;
   updateTorchButton();
   clearCameraNotice();
+  els.scannerSection?.classList.add("hidden");
   els.scanLine.classList.remove("active");
   els.video.classList.remove("is-live");
   if (stream) {
@@ -1139,6 +1418,11 @@ els.profileForm?.addEventListener("submit", (event) => {
   saveProfile();
   renderProfile();
 });
+els.navStyleToggle?.addEventListener("change", (event) => {
+  profile.navStyle = event.target.checked ? "navbar" : "fab";
+  document.body.classList.toggle("nav-style-navbar", event.target.checked);
+  saveProfile();
+});
 els.clearHistory?.addEventListener("click", () => {
   profile.history = [];
   saveProfile();
@@ -1205,11 +1489,171 @@ els.profileStats?.addEventListener("click", (event) => {
   if (deleteGroup) deleteArchivedGroup(deleteGroup.dataset.deleteArchivedGroup);
   if (deleteSaved) deleteArchivedSaved(deleteSaved.dataset.deleteArchivedSaved);
 });
+
+// Pulse & Modal Listeners
+document.querySelector(".pulse-grid")?.addEventListener("click", (e) => {
+  const card = e.target.closest("[data-pulse-trigger]");
+  const quickAdd = e.target.closest("[data-add-cheapest]");
+
+  if (quickAdd) {
+    addPulseItem(quickAdd.dataset.addCheapest);
+    return;
+  }
+
+  if (card) {
+    openBreakdown(card.dataset.pulseTrigger);
+  }
+});
+
+els.closeModal?.addEventListener("click", closeBreakdown);
+
+els.backToSummary?.addEventListener("click", () => {
+  els.storeDrilldown.classList.add("hidden");
+  els.breakdownSummary.classList.remove("hidden");
+});
+
+els.breakdownSummary?.addEventListener("click", (e) => {
+  const drillBtn = e.target.closest("[data-drilldown-store]");
+  const addBtn = e.target.closest(".add-specific-btn");
+
+  if (drillBtn) {
+    openStoreDrilldown(drillBtn.dataset.drilldownType, drillBtn.dataset.drilldownStore);
+  } else if (addBtn) {
+    addPulseItem(addBtn.dataset.pulseType, addBtn.dataset.store, addBtn.dataset.brand);
+  }
+});
+
+els.drilldownList?.addEventListener("click", (e) => {
+  const btn = e.target.closest(".add-specific-btn");
+  if (btn) {
+    addPulseItem(btn.dataset.pulseType, btn.dataset.store, btn.dataset.brand);
+  }
+});
+
 document.querySelectorAll("[data-code]").forEach((button) => {
   button.addEventListener("click", () => lookup(button.dataset.code));
 });
 
+function openBreakdown(type) {
+  const data = pulseData[type];
+  if (!data) return;
+
+  els.modalTitle.textContent = data.name;
+  els.modalIcon.textContent = data.icon;
+
+  renderBreakdownSummary(type);
+  els.breakdownModal.classList.remove("hidden");
+  els.breakdownSummary.classList.remove("hidden");
+  els.storeDrilldown.classList.add("hidden");
+}
+
+function renderBreakdownSummary(type) {
+  const data = pulseData[type];
+  els.breakdownSummary.innerHTML = data.stores.map((store) => {
+    const cheapest = [...store.options].sort((a, b) => a.price - b.price)[0];
+    return `
+      <div class="store-summary-card">
+        <div class="summary-header">
+          <strong>${store.name}</strong>
+          <span class="summary-meta">${store.distance} away</span>
+        </div>
+        <div class="summary-details">
+          <div>
+            <span class="summary-brand">${cheapest.brand}</span>
+            <span class="summary-meta">Cheapest option: ${money(cheapest.price)}</span>
+          </div>
+          <button class="view-all-btn" data-drilldown-type="${type}" data-drilldown-store="${store.name}">View all options →</button>
+        </div>
+        <button class="add-specific-btn" data-pulse-type="${type}" data-store="${store.name}" data-brand="${cheapest.brand}">Add Cheapest</button>
+      </div>
+    `;
+  }).join("");
+}
+
+function openStoreDrilldown(type, storeName) {
+  const data = pulseData[type];
+  const store = data.stores.find(s => s.name === storeName);
+  if (!store) return;
+
+  els.drilldownStoreName.textContent = store.name;
+
+  // Expiration logic
+  const today = new Date();
+  const expDate = new Date();
+  expDate.setDate(today.getDate() + data.shelfLife);
+  const dateStr = expDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  const relativeStr = `${data.shelfLife} days from today`;
+
+  els.drilldownList.innerHTML = [...store.options]
+    .sort((a, b) => a.price - b.price)
+    .map((opt) => `
+      <div class="breakdown-item">
+        <div class="item-main">
+          <strong>${opt.brand}</strong>
+          <div class="item-meta">
+            <span>${money(opt.price)}</span>
+            <span>Exp: ${dateStr} (${relativeStr})</span>
+          </div>
+          <p class="analysis-text">${opt.analysis}</p>
+          <button class="query-btn" onclick="alert('Bino Analysis: This brand offers the best balance of price and shelf stability for your local market.')">Why this brand?</button>
+        </div>
+        <div class="item-action">
+          <button class="add-specific-btn" data-pulse-type="${type}" data-store="${store.name}" data-brand="${opt.brand}">Add</button>
+        </div>
+      </div>
+    `).join("");
+
+  els.breakdownSummary.classList.add("hidden");
+  els.storeDrilldown.classList.remove("hidden");
+}
+
+function closeBreakdown() {
+  els.breakdownModal.classList.add("hidden");
+}
+
+function addPulseItem(type, storeName, brandName) {
+  const data = pulseData[type];
+  const store = storeName ? data.stores.find(s => s.name === storeName) : data.stores[0];
+  const option = brandName
+    ? store.options.find(o => o.brand === brandName)
+    : [...store.options].sort((a, b) => a.price - b.price)[0];
+
+  if (!option) return;
+
+  const product = {
+    upc: `pulse-${type}-${store.name.toLowerCase()}-${option.brand.replace(/\s+/g, '-').toLowerCase()}`,
+    name: `${data.name}`,
+    brand: option.brand,
+    size: "Standard",
+    category: "Market Pulse",
+    stores: [{ name: store.name, price: option.price, distance: store.distance, confidence: "Pulse match" }]
+  };
+
+  addProductToBasket(product);
+  closeBreakdown();
+}
+
+function setupRadialMenu() {
+  const menu = document.querySelector("#radialMenu");
+  const toggle = document.querySelector("#menuToggle");
+  const overlay = document.querySelector("#radialOverlay");
+
+  if (!menu || !toggle || !overlay) return;
+
+  menu.classList.toggle("show-labels", profile?.showMenuLabels ?? false);
+  overlay.style.backdropFilter = `blur(${profile?.menuBlur ?? 5}px)`;
+
+  toggle.addEventListener("click", () => {
+    menu.classList.toggle("open");
+  });
+
+  overlay.addEventListener("click", () => {
+    menu.classList.remove("open");
+  });
+}
+
 loadProfile();
+setupRadialMenu();
 const initialParams = new URLSearchParams(window.location.search);
 const initialGroup = initialParams.get("group");
 if (initialGroup && profile.groups.some((group) => group.id === initialGroup)) {
@@ -1221,7 +1665,10 @@ renderBasket();
 renderHistory();
 renderSaved();
 renderProfile();
-updateTorchButton();
-setMode("empty");
 const initialLookup = initialParams.get("lookup");
-if (initialLookup) lookup(initialLookup);
+if (document.body?.dataset.page === "scan") {
+  updateTorchButton();
+  setMode("empty");
+  if (initialLookup) lookup(initialLookup);
+  if (initialParams.get("scan") === "true") startCamera();
+}

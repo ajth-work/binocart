@@ -5,6 +5,7 @@
   "description": "BinoCart static prototype packaged for web and Android through Capacitor.",
   "scripts": {
     "test": "node --test",
+    "review": "node scripts/serve-static.js 4181",
     "build:web": "node scripts/build-web.js",
     "cap": "node scripts/run-capacitor.js",
     "cap:sync": "npm run build:web && node scripts/run-capacitor.js sync android",

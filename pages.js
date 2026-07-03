@@ -26,7 +26,16 @@ const els = {
   receiptTax: document.querySelector("#receiptTax"),
   receiptTotal: document.querySelector("#receiptTotal"),
   receiptHistory: document.querySelector("#receiptHistory"),
-  receiptHistoryCount: document.querySelector("#receiptHistoryCount")
+  receiptHistoryCount: document.querySelector("#receiptHistoryCount"),
+  showLabelsToggle: document.querySelector("#showLabelsToggle"),
+  navStyleToggle: document.querySelector("#navStyleToggle"),
+  blurRange: document.querySelector("#blurRange"),
+  blurValue: document.querySelector("#blurValue"),
+  navPlusAction: document.querySelector("#navPlusAction"),
+  actionOverlay: document.querySelector("#actionOverlay"),
+  closeActions: document.querySelector("#closeActions"),
+  actionBarcodeScan: document.querySelector("#actionBarcodeScan"),
+  plusButtonToggle: document.querySelector("#plusButtonToggle")
 };
 
 let profile = null;
@@ -63,7 +72,10 @@ function defaultProfile() {
     archivedGroups: [],
     archivedSaved: [],
     receipts: [],
-    priceObservations: []
+    priceObservations: [],
+    showMenuLabels: false,
+    menuBlur: 2,
+    navStyle: "fab"
   };
 }
 
@@ -82,6 +94,14 @@ function loadProfile() {
   profile.archivedSaved = Array.isArray(profile.archivedSaved) ? profile.archivedSaved : [];
   profile.receipts = Array.isArray(profile.receipts) ? profile.receipts : [];
   profile.priceObservations = Array.isArray(profile.priceObservations) ? profile.priceObservations : [];
+  profile.showMenuLabels = typeof profile.showMenuLabels === "boolean" ? profile.showMenuLabels : false;
+  profile.menuBlur = typeof profile.menuBlur === "number" ? profile.menuBlur : 2;
+  profile.navStyle = "navbar";
+  profile.showPlusButton = false;
+
+  document.body?.classList.toggle("nav-style-navbar", profile.navStyle === "navbar");
+  document.body?.classList.toggle("hide-nav-plus", true);
+
   if (!profile.activeGroupId || !profile.groups.some((group) => group.id === profile.activeGroupId)) {
     profile.activeGroupId = profile.groups[0].id;
   }
@@ -107,6 +127,12 @@ function basketLabel(count) {
 function updateProfileHeader() {
   if (els.profileName) els.profileName.textContent = profile.name;
   if (els.profileButton) els.profileButton.title = `Profile: ${profile.name}`;
+  if (els.showLabelsToggle) els.showLabelsToggle.checked = profile.showMenuLabels;
+  if (els.navStyleToggle) els.navStyleToggle.checked = profile.navStyle === "navbar";
+  if (els.blurRange) {
+    els.blurRange.value = profile.menuBlur;
+    if (els.blurValue) els.blurValue.textContent = `${profile.menuBlur}px`;
+  }
 }
 
 function createGroup(name = "New list") {
@@ -386,6 +412,11 @@ function renderSaved() {
 
 function renderProfile() {
   if (els.profileNameInput) els.profileNameInput.value = profile.name;
+  if (els.navStyleToggle) els.navStyleToggle.checked = profile.navStyle === "navbar";
+  if (els.plusButtonToggle) els.plusButtonToggle.checked = false;
+  if (els.showLabelsToggle) els.showLabelsToggle.checked = profile.showMenuLabels;
+  if (els.blurRange) els.blurRange.value = profile.menuBlur;
+  if (els.blurValue) els.blurValue.textContent = `${profile.menuBlur}px`;
   if (!els.profileStats) return;
   const recentReceipts = profile.receipts.slice(0, 5).map((receipt) => `
     <article class="archive-row">
@@ -488,7 +519,27 @@ function handleProfileArchiveAction(event) {
   if (deleteSavedButton) deleteArchivedSaved(deleteSavedButton.dataset.deleteArchivedSaved);
 }
 
+function setupRadialMenu() {
+  const menu = document.querySelector("#radialMenu");
+  const toggle = document.querySelector("#menuToggle");
+  const overlay = document.querySelector("#radialOverlay");
+
+  if (!menu || !toggle || !overlay) return;
+
+  menu.classList.toggle("show-labels", profile?.showMenuLabels ?? false);
+  overlay.style.backdropFilter = `blur(${profile?.menuBlur ?? 5}px)`;
+
+  toggle.addEventListener("click", () => {
+    menu.classList.toggle("open");
+  });
+
+  overlay.addEventListener("click", () => {
+    menu.classList.remove("open");
+  });
+}
+
 loadProfile();
+setupRadialMenu();
 renderCurrentPage();
 
 els.newGroupQuick?.addEventListener("click", () => createGroup());
@@ -502,6 +553,25 @@ els.profileForm?.addEventListener("submit", (event) => {
   profile.name = els.profileNameInput.value.trim() || "My profile";
   saveProfile();
   renderCurrentPage();
+});
+els.navStyleToggle?.addEventListener("change", (event) => {
+  profile.navStyle = event.target.checked ? "navbar" : "fab";
+  document.body.classList.toggle("nav-style-navbar", event.target.checked);
+  saveProfile();
+});
+els.showLabelsToggle?.addEventListener("change", (event) => {
+  profile.showMenuLabels = event.target.checked;
+  const menu = document.querySelector("#radialMenu");
+  if (menu) menu.classList.toggle("show-labels", profile.showMenuLabels);
+  saveProfile();
+});
+els.blurRange?.addEventListener("input", (event) => {
+  const val = Number(event.target.value);
+  profile.menuBlur = val;
+  if (els.blurValue) els.blurValue.textContent = `${val}px`;
+  const overlay = document.querySelector("#radialOverlay");
+  if (overlay) overlay.style.backdropFilter = `blur(${val}px)`;
+  saveProfile();
 });
 els.historyList?.addEventListener("click", handleProductAction);
 els.savedList?.addEventListener("click", handleProductAction);

@@ -6,6 +6,7 @@ const outDir = path.join(root, "www");
 
 const entries = [
   "index.html",
+  "scan.html",
   "list.html",
   "receipts.html",
   "history.html",

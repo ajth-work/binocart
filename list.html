@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>BinoCart - Lists</title>
     <link rel="stylesheet" href="styles.css?v=20260702-receipts" />
   </head>
@@ -18,7 +18,8 @@
         <strong><span>Bino</span><span>Cart</span></strong>
       </a>
       <nav aria-label="Primary">
-        <a class="nav-btn" href="index.html">Scan</a>
+        <a class="nav-btn" href="index.html">Intel</a>
+        <a class="nav-btn" href="scan.html">Scan</a>
         <a class="nav-btn active" href="list.html">List</a>
         <a class="nav-btn" href="receipts.html">Receipts</a>
         <a class="nav-btn" href="history.html">History</a>
@@ -30,23 +31,75 @@
 
     <main class="app-page">
       <header class="page-heading">
-        <div>
-          <p class="eyebrow">Lists</p>
-          <h1>Plan smarter carts</h1>
-        </div>
+        <div><p class="eyebrow">Lists</p><h1>Plan smarter carts</h1></div>
         <button id="newGroupQuick" class="small-action" type="button">New group</button>
       </header>
       <div id="groupCards" class="group-cards"></div>
     </main>
 
-    <nav class="bottom-nav" aria-label="Primary mobile">
-      <a class="nav-btn" href="index.html">Scan</a>
-      <a class="nav-btn active" href="list.html">List</a>
-      <a class="nav-btn" href="receipts.html">Receipts</a>
-      <a class="nav-btn" href="history.html">History</a>
-      <a class="nav-btn" href="saved.html">Saved</a>
-      <a class="nav-btn" href="profile.html">Profile</a>
+    <div id="radialMenu" class="radial-menu">
+      <button id="menuToggle" class="fab-toggle" aria-label="Open menu">
+        <svg viewBox="0 0 24 24" width="32" height="32" stroke-width="3" stroke="currentColor" fill="none"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg>
+      </button>
+      <nav class="radial-items">
+        <a class="radial-item" href="index.html" data-label="Market Intel"><svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none" stroke-width="2.5"><path d="M4 20h16M7 14v6M12 10v10M17 6v10" stroke-linecap="round"/></svg></a>
+        <a class="radial-item" href="list.html" data-label="Lists"><svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none" stroke-width="2.5"><path d="M9 7h11M9 12h11M9 17h11M5 7h.01M5 12h.01M5 17h.01" stroke-linecap="round"/></svg></a>
+        <a class="radial-item" href="receipts.html" data-label="Receipts"><svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none" stroke-width="2.5"><path d="M4 2v18l2-1 2 1 2-1 2 1 2-1 2 1 2-1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z M9 7h6M9 11h6M9 15h4" stroke-linecap="round"/></svg></a>
+        <a class="radial-item" href="history.html" data-label="History"><svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none" stroke-width="2.5"><path d="M12 8v4l3 3 M21 12a9 9 0 1 1-9-9" stroke-linecap="round"/></svg></a>
+        <a class="radial-item" href="saved.html" data-label="Saved"><svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none" stroke-width="2.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke-linecap="round"/></svg></a>
+        <a class="radial-item" href="profile.html" data-label="Profile"><svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none" stroke-width="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2 M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" stroke-linecap="round"/></svg></a>
+      </nav>
+    </div>
+    <div id="radialOverlay" class="radial-overlay"></div>
+
+    <nav class="bottom-navbar">
+      <a href="index.html" class="nav-item">
+        <svg viewBox="0 0 24 24" class="nav-icon"><path d="M4 20h16M7 14v6M12 10v10M17 6v10" stroke-width="2.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Intel
+      </a>
+      <a href="list.html" class="nav-item active">
+        <svg viewBox="0 0 24 24" class="nav-icon"><path d="M9 7h11M9 12h11M9 17h11M5 7h.01M5 12h.01M5 17h.01" stroke-width="2.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Lists
+      </a>
+      <a href="receipts.html" class="nav-item">
+        <svg viewBox="0 0 24 24" class="nav-icon"><path d="M4 2v18l2-1 2 1 2-1 2 1 2-1 2 1 2-1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z M9 7h6M9 11h6M9 15h4" stroke-width="2.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Rec
+      </a>
+      <button class="nav-center-action" id="navPlusAction">
+        <svg viewBox="0 0 24 24" class="plus-icon"><path d="M12 5v14M5 12h14" stroke-width="3" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <a href="history.html" class="nav-item">
+        <svg viewBox="0 0 24 24" class="nav-icon"><path d="M12 8v4l3 3 M21 12a9 9 0 1 1-9-9" stroke-width="2.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        History
+      </a>
+      <a href="saved.html" class="nav-item">
+        <svg viewBox="0 0 24 24" class="nav-icon"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke-width="2.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Saved
+      </a>
+      <a href="profile.html" class="nav-item">
+        <svg viewBox="0 0 24 24" class="nav-icon"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2 M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" stroke-width="2.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Pro
+      </a>
     </nav>
+
+    <div id="actionOverlay" class="action-overlay">
+      <div class="action-options">
+        <a href="index.html?scan=true" class="action-btn">
+          <div class="action-icon-circle">
+            <svg viewBox="0 0 24 24" width="32" height="32"><path d="M3 7V5a2 2 0 0 1 2-2h2 M17 3h2a2 2 0 0 1 2 2v2 M21 17v2a2 2 0 0 1-2 2h-2 M7 21H5a2 2 0 0 1-2-2v-2 M7 12h10" stroke-width="2.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <span>Barcode Scan</span>
+        </a>
+        <a href="receipts.html" class="action-btn">
+          <div class="action-icon-circle">
+            <svg viewBox="0 0 24 24" width="32" height="32"><path d="M4 2v18l2-1 2 1 2-1 2 1 2-1 2 1 2-1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z M9 7h6M9 11h6M9 15h4" stroke-width="2.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <span>Receipt Scan</span>
+        </a>
+      </div>
+      <button class="close-actions-btn" id="closeActions">✕</button>
+    </div>
+
     <script src="pages.js?v=20260702-receipts"></script>
   </body>
 </html>

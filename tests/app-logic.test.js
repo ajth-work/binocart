@@ -44,3 +44,20 @@ test("optimizer compares one-store and multi-store plans", () => {
   assert.ok(multi.length >= 1);
   assert.ok(multi.reduce((sum, stop) => sum + stop.total, 0) <= single.total);
 });
+
+test("adding the same product increments basket quantity", () => {
+  const { context, profile, element } = createHarness("app.js");
+
+  context.loadProfile();
+  const butter = context.getProduct("butter");
+  context.addProductToBasket(butter);
+  context.addProductToBasket(butter);
+
+  const activeGroup = profile().groups[0];
+  assert.equal(activeGroup.items.length, 1);
+  assert.equal(activeGroup.items[0].quantity, 2);
+  assert.equal(element("#basketCount").textContent, "2 items");
+  assert.match(element("#basketList").innerHTML, /quantity-badge">x2/);
+  assert.equal(element("#basketTotal").textContent, "$6.98 estimated");
+  assert.match(element("#basketStores").innerHTML, /Aldi x2/);
+});

@@ -3,10 +3,10 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>BinoCart - Intel</title>
+    <title>BinoCart - Scan</title>
     <link rel="stylesheet" href="styles.css?v=20260702-receipts" />
   </head>
-  <body data-page="dashboard">
+  <body data-page="scan">
     <header class="app-nav">
       <a class="brand-mark" href="index.html" aria-label="BinoCart home">
         <span class="bino-logo" aria-hidden="true">
@@ -18,8 +18,8 @@
         <strong><span>Bino</span><span>Cart</span></strong>
       </a>
       <nav aria-label="Primary">
-        <a class="nav-btn active" href="index.html">Intel</a>
-        <a class="nav-btn" href="scan.html">Scan</a>
+        <a class="nav-btn" href="index.html">Intel</a>
+        <a class="nav-btn active" href="scan.html">Scan</a>
         <a class="nav-btn" href="list.html">List</a>
         <a class="nav-btn" href="receipts.html">Receipts</a>
         <a class="nav-btn" href="history.html">History</a>
@@ -29,106 +29,80 @@
       <a id="profileButton" class="profile-pill" href="profile.html"><span id="profileName">My profile</span></a>
     </header>
 
-    <main class="app-shell">
-      <section class="dashboard-pane" aria-label="Market Dashboard">
-        <header class="topbar">
-          <div><p class="eyebrow">Bino Dashboard</p><h1>Market Intelligence</h1></div>
-          <div class="location-pill" aria-label="Current market"><span class="dot"></span>Columbus, OH</div>
-        </header>
-
-        <section class="search-hero">
-          <form id="lookupForm" class="manual-lookup" autocomplete="off">
-            <div class="lookup-row">
-              <input id="upcInput" name="upc" type="text" inputmode="numeric" placeholder="Search product or UPC..." />
-              <a href="receipts.html" class="search-trigger" title="Go to Receipt Scanning"><svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35" stroke-linecap="round"/></svg></a>
-            </div>
-          </form>
-          <a href="scan.html" class="primary-btn scan-hero-btn">
-            <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="2.5" aria-hidden="true">
-              <path d="M3 7h4l2-3h6l2 3h4v13H3z" stroke-linejoin="round"/>
-              <circle cx="12" cy="13" r="4"/>
-            </svg>
-            Quick Scan
-          </a>
-        </section>
-
-        <section class="market-pulse">
-          <div class="section-heading"><h3>Local Market Pulse</h3><span class="live-indicator">LIVE</span></div>
-          <div class="pulse-grid">
-            <article class="pulse-card square-card" data-pulse-trigger="eggs">
-              <div class="pulse-header"><span class="pulse-icon">🥚</span><span class="trend-badge down">-$0.42</span></div>
-              <div class="pulse-body"><strong>Eggs (Dozen)</strong><p>Best: $1.89 at Aldi</p></div>
-              <button class="quick-add-btn" data-add-cheapest="eggs"><span>+</span></button>
-            </article>
-            <article class="pulse-card square-card" data-pulse-trigger="milk">
-              <div class="pulse-header"><span class="pulse-icon">🥛</span><span class="trend-badge down">-$0.15</span></div>
-              <div class="pulse-body"><strong>Milk (Gallon)</strong><p>Best: $3.05 at Aldi</p></div>
-              <button class="quick-add-btn" data-add-cheapest="milk"><span>+</span></button>
-            </article>
-            <article class="pulse-card square-card" data-pulse-trigger="bread">
-              <div class="pulse-header"><span class="pulse-icon">🍞</span><span class="trend-badge up">+$0.10</span></div>
-              <div class="pulse-body"><strong>Bread (Loaf)</strong><p>Best: $1.29 at Aldi</p></div>
-              <button class="quick-add-btn" data-add-cheapest="bread"><span>+</span></button>
-            </article>
-            <article class="pulse-card square-card" data-pulse-trigger="bananas">
-              <div class="pulse-header"><span class="pulse-icon">🍌</span><span class="trend-badge stable">Stable</span></div>
-              <div class="pulse-body"><strong>Bananas (lb)</strong><p>Best: $0.48 at Walmart</p></div>
-              <button class="quick-add-btn" data-add-cheapest="bananas"><span>+</span></button>
-            </article>
-            <article class="pulse-card square-card" data-pulse-trigger="butter">
-              <div class="pulse-header"><span class="pulse-icon">🧈</span><span class="trend-badge down">-$0.50</span></div>
-              <div class="pulse-body"><strong>Butter (16oz)</strong><p>Best: $3.49 at Aldi</p></div>
-              <button class="quick-add-btn" data-add-cheapest="butter"><span>+</span></button>
-            </article>
-          </div>
-        </section>
-
-        <section class="basket-panel" aria-label="Cart from the Pulse">
-          <div class="section-heading"><h3>Cart from the Pulse</h3><span id="basketCount">0 items</span></div>
-          <div class="basket-summary" aria-label="Cart summary">
-            <span id="basketTotal" class="basket-total-pill">$0.00 estimated</span>
-            <div id="basketStores" class="basket-store-pills" aria-label="Stores in cart"></div>
-          </div>
-          <div id="basketList" class="basket-list"></div>
-          <div class="basket-actions"><a href="list.html" class="ghost-btn">Manage lists</a><button id="seedBasket" class="ghost-btn" type="button">Build demo list</button></div>
-        </section>
+    <main class="app-page">
+      <section class="scanner-pane">
+        <div class="scanner-header">
+          <h3>Active Barcode Scanner</h3>
+          <button id="toggleTorch" class="icon-btn">Light</button>
+        </div>
+        <div class="scanner-frame">
+          <video id="camera" class="camera" autoplay playsinline muted></video>
+          <div id="cameraFallback" class="camera-fallback"><p>Initializing camera...</p></div>
+          <div id="cameraNotice" class="camera-notice hidden"></div>
+          <div class="scan-grid" aria-hidden="true"></div>
+          <div id="scanLine" class="scan-line"></div>
+          <div class="corner top-left"></div><div class="corner top-right"></div>
+          <div class="corner bottom-left"></div><div class="corner bottom-right"></div>
+        </div>
+        <div class="scan-actions">
+           <button id="demoScan" class="ghost-btn" type="button">Demo Scan</button>
+        </div>
       </section>
 
-      <section class="recommendation-panel" aria-label="Bino recommendation">
-        <div class="recommendation-header">
-          <div>
-            <p class="eyebrow">Bino Recommendation</p>
-            <h2>Build an Aldi staples run today</h2>
+      <section class="results-pane" aria-live="polite">
+        <div id="emptyState" class="empty-state">
+          <p class="eyebrow">Ready</p>
+          <h2>Point at a barcode to see market intelligence.</h2>
+        </div>
+
+        <div id="loadingState" class="loading-state hidden">
+          <p class="eyebrow">Intelligence Feed</p>
+          <h2>Analyzing market data...</h2>
+          <div class="progress-track"><span id="progressBar"></span></div>
+          <p id="loadingText">Identifying product</p>
+        </div>
+
+        <article id="productResult" class="product-result hidden">
+          <header class="product-header">
+            <img id="productImage" class="product-image hidden" alt="" />
+            <div>
+              <p id="productMeta" class="eyebrow">UPC</p>
+              <h2 id="productName"></h2>
+              <p id="productBrand" class="subtle"></p>
+              <p id="productSource" class="source-line"></p>
+            </div>
+            <div class="product-actions">
+              <div id="dealBadge" class="deal-badge">Fair</div>
+              <button id="addToBasket" class="small-action" type="button">Add to list</button>
+              <button id="saveProduct" class="ghost-btn" type="button">Save</button>
+            </div>
+          </header>
+
+          <div class="hero-metrics">
+            <div><span class="metric-label">Best decision</span><strong id="bestPrice">$0.00</strong><span id="bestStore"></span></div>
+            <div><span class="metric-label">Trend</span><strong id="trendValue">0%</strong><span id="trendCopy"></span></div>
+            <div><span class="metric-label">Alternative</span><strong id="savingsValue">$0.00</strong><span id="alternativeName"></span></div>
           </div>
-        </div>
-        <span class="confidence-pill">High confidence</span>
-        <p class="recommendation-copy">Eggs, milk, bread, and butter are currently beating nearby stores, making Aldi the strongest option for this staples run.</p>
-        <div class="recommendation-metrics" aria-label="Recommendation summary">
-          <div><span>Estimated savings</span><strong>$4.20</strong></div>
-          <div><span>Best current store</span><strong>Aldi</strong></div>
-          <div><span>Freshness signal</span><strong>Today</strong></div>
-        </div>
-        <div class="recommendation-actions">
-          <a class="primary-btn" href="list.html">Review list</a>
-        </div>
+
+          <section class="insight-band"><span aria-hidden="true">i</span><p id="insightText"></p></section>
+
+          <section class="store-section">
+            <div class="section-heading"><h3>Nearby stores</h3><button id="sortStores" class="text-btn" type="button">Sort</button></div>
+            <div id="storeList" class="store-list"></div>
+          </section>
+
+          <section class="history-section">
+            <div class="section-heading"><h3>Price history</h3></div>
+            <svg id="historyChart" class="history-chart" viewBox="0 0 640 180"></svg>
+          </section>
+
+          <section class="alternative-section">
+            <h3>Bino swap</h3>
+            <div id="alternativeCard" class="alternative-card"></div>
+          </section>
+        </article>
       </section>
     </main>
-
-    <div id="breakdownModal" class="modal-overlay hidden">
-      <div class="modal-card">
-        <header class="modal-header">
-          <div class="modal-title-group"><span id="modalIcon" class="modal-hero-icon">🥚</span><div><h2 id="modalTitle">Breakdown</h2><p id="modalSubtitle" class="subtle">Local price analysis</p></div></div>
-          <button id="closeModal" class="icon-btn">✕</button>
-        </header>
-        <div class="modal-content">
-          <div id="breakdownSummary" class="breakdown-summary"></div>
-          <div id="storeDrilldown" class="store-drilldown hidden">
-            <div class="drilldown-header"><button id="backToSummary" class="text-btn">← Back</button><h3 id="drilldownStoreName"></h3></div>
-            <div id="drilldownList" class="breakdown-list"></div>
-          </div>
-        </div>
-      </div>
-    </div>
 
     <div id="radialMenu" class="radial-menu">
       <button id="menuToggle" class="fab-toggle" aria-label="Open menu">
@@ -147,11 +121,11 @@
     <div id="radialOverlay" class="radial-overlay"></div>
 
     <nav class="bottom-navbar">
-      <a href="index.html" class="nav-item active">
+      <a href="index.html" class="nav-item">
         <svg viewBox="0 0 24 24" class="nav-icon"><path d="M4 20h16M7 14v6M12 10v10M17 6v10" stroke-width="2.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
         Intel
       </a>
-      <a href="scan.html" class="nav-item">
+      <a href="scan.html" class="nav-item active">
         <svg viewBox="0 0 24 24" class="nav-icon"><path d="M3 7V5a2 2 0 0 1 2-2h2 M17 3h2a2 2 0 0 1 2 2v2 M21 17v2a2 2 0 0 1-2 2h-2 M7 21H5a2 2 0 0 1-2-2v-2 M7 12h10" stroke-width="2.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
         Scan
       </a>
