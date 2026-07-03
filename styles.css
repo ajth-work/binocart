@@ -696,6 +696,118 @@ h3 {
   background: rgba(255, 255, 255, 0.035);
 }
 
+.receipt-workspace {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.8fr) minmax(0, 1.2fr);
+  gap: 16px;
+}
+
+.receipt-upload-panel,
+.receipt-review-panel,
+.receipt-history-section {
+  display: grid;
+  gap: 14px;
+  padding: 14px;
+  border: 1px solid rgba(154, 167, 184, 0.16);
+  border-radius: 8px;
+  background: rgba(23, 27, 34, 0.88);
+}
+
+.file-drop {
+  display: grid;
+  gap: 4px;
+  min-height: 88px;
+  padding: 16px;
+  border: 1px dashed rgba(46, 204, 113, 0.48);
+  border-radius: 8px;
+  background: rgba(46, 204, 113, 0.08);
+  cursor: pointer;
+}
+
+.file-drop span {
+  font-weight: 900;
+}
+
+.file-drop small {
+  color: var(--muted);
+}
+
+.hidden-file {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.receipt-preview {
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  min-height: 260px;
+  border: 1px solid rgba(154, 167, 184, 0.16);
+  border-radius: 8px;
+  background: #0f1413;
+}
+
+.receipt-preview img {
+  width: 100%;
+  max-height: 520px;
+  object-fit: contain;
+}
+
+.receipt-fields,
+.receipt-totals {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.receipt-fields label,
+.receipt-totals label {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.receipt-fields input,
+.receipt-totals input,
+.receipt-item-row input {
+  min-width: 0;
+  min-height: 42px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #0f141b;
+  color: var(--text);
+}
+
+.receipt-items-heading,
+.receipt-item-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 76px 110px;
+  gap: 8px;
+  align-items: center;
+}
+
+.receipt-items-heading {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.receipt-items {
+  display: grid;
+  gap: 8px;
+}
+
+.receipt-history-section {
+  margin-top: 16px;
+}
+
 .group-card header,
 .history-card {
   display: grid;
@@ -1130,7 +1242,7 @@ h3 {
     bottom: 12px;
     z-index: 30;
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(6, 1fr);
     padding: 6px;
     border: 1px solid rgba(154, 167, 184, 0.22);
     border-radius: 8px;
@@ -1139,8 +1251,8 @@ h3 {
   }
 
   .bottom-nav .nav-btn {
-    padding: 0 6px;
-    font-size: 0.78rem;
+    padding: 0 4px;
+    font-size: 0.72rem;
   }
 
   .app-shell {
@@ -1186,6 +1298,15 @@ h3 {
 
   .store-row {
     grid-template-columns: 1fr auto;
+  }
+
+  .receipt-workspace,
+  .receipt-fields,
+  .receipt-totals,
+  .receipt-items-heading,
+  .receipt-item-row,
+  .archive-row {
+    grid-template-columns: 1fr;
   }
 
   .store-distance {

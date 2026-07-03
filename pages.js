@@ -11,13 +11,37 @@ const els = {
   newGroupQuick: document.querySelector("#newGroupQuick"),
   historyList: document.querySelector("#historyList"),
   clearHistory: document.querySelector("#clearHistory"),
-  savedList: document.querySelector("#savedList")
+  savedList: document.querySelector("#savedList"),
+  receiptFile: document.querySelector("#receiptFile"),
+  receiptFileName: document.querySelector("#receiptFileName"),
+  receiptPreview: document.querySelector("#receiptPreview"),
+  parseReceiptDemo: document.querySelector("#parseReceiptDemo"),
+  resetReceiptReview: document.querySelector("#resetReceiptReview"),
+  receiptForm: document.querySelector("#receiptForm"),
+  receiptStore: document.querySelector("#receiptStore"),
+  receiptLocation: document.querySelector("#receiptLocation"),
+  receiptDate: document.querySelector("#receiptDate"),
+  receiptItems: document.querySelector("#receiptItems"),
+  receiptSubtotal: document.querySelector("#receiptSubtotal"),
+  receiptTax: document.querySelector("#receiptTax"),
+  receiptTotal: document.querySelector("#receiptTotal"),
+  receiptHistory: document.querySelector("#receiptHistory"),
+  receiptHistoryCount: document.querySelector("#receiptHistoryCount")
 };
 
 let profile = null;
+let receiptDraft = null;
 
 function money(value) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value);
+}
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;");
 }
 
 function makeId(prefix) {
@@ -37,7 +61,9 @@ function defaultProfile() {
     history: [],
     saved: [],
     archivedGroups: [],
-    archivedSaved: []
+    archivedSaved: [],
+    receipts: [],
+    priceObservations: []
   };
 }
 
@@ -54,6 +80,8 @@ function loadProfile() {
   profile.saved = Array.isArray(profile.saved) ? profile.saved : [];
   profile.archivedGroups = Array.isArray(profile.archivedGroups) ? profile.archivedGroups : [];
   profile.archivedSaved = Array.isArray(profile.archivedSaved) ? profile.archivedSaved : [];
+  profile.receipts = Array.isArray(profile.receipts) ? profile.receipts : [];
+  profile.priceObservations = Array.isArray(profile.priceObservations) ? profile.priceObservations : [];
   if (!profile.activeGroupId || !profile.groups.some((group) => group.id === profile.activeGroupId)) {
     profile.activeGroupId = profile.groups[0].id;
   }
@@ -176,6 +204,114 @@ function deleteArchivedSaved(upc) {
   renderCurrentPage();
 }
 
+function mockParsedReceipt() {
+  return {
+    store: "Kroger",
+    location: "Columbus, OH",
+    date: new Date().toISOString().slice(0, 10),
+    subtotal: 13.31,
+    tax: 0.48,
+    total: 13.79,
+    source: "demo parser",
+    items: [
+      { name: "Jif Creamy Peanut Butter", quantity: 1, unitPrice: 2.84 },
+      { name: "Chobani Oatmilk Original", quantity: 1, unitPrice: 3.98 },
+      { name: "Kleenex Trusted Care Tissues", quantity: 1, unitPrice: 5.99 }
+    ]
+  };
+}
+
+function renderReceiptReview(receipt) {
+  if (!els.receiptForm) return;
+  receiptDraft = receipt;
+  els.receiptForm.classList.remove("hidden");
+  els.receiptStore.value = receipt.store || "";
+  els.receiptLocation.value = receipt.location || "";
+  els.receiptDate.value = receipt.date || new Date().toISOString().slice(0, 10);
+  els.receiptSubtotal.value = Number(receipt.subtotal || 0).toFixed(2);
+  els.receiptTax.value = Number(receipt.tax || 0).toFixed(2);
+  els.receiptTotal.value = Number(receipt.total || 0).toFixed(2);
+  els.receiptItems.innerHTML = receipt.items.map((item, index) => `
+    <div class="receipt-item-row" data-receipt-item="${index}">
+      <input type="text" value="${escapeHtml(item.name)}" aria-label="Receipt item name ${index + 1}" />
+      <input type="number" min="0" step="1" value="${item.quantity || 1}" aria-label="Receipt item quantity ${index + 1}" />
+      <input type="number" min="0" step="0.01" value="${Number(item.unitPrice || 0).toFixed(2)}" aria-label="Receipt item price ${index + 1}" />
+    </div>
+  `).join("");
+}
+
+function clearReceiptReview() {
+  receiptDraft = null;
+  els.receiptForm?.classList.add("hidden");
+  if (els.receiptItems) els.receiptItems.innerHTML = "";
+}
+
+function readReceiptReview() {
+  const items = [...els.receiptItems.querySelectorAll("[data-receipt-item]")].map((row) => {
+    const [nameInput, quantityInput, priceInput] = row.querySelectorAll("input");
+    return {
+      name: nameInput.value.trim(),
+      quantity: Number(quantityInput.value) || 1,
+      unitPrice: Number(priceInput.value) || 0
+    };
+  }).filter((item) => item.name);
+
+  return {
+    id: makeId("receipt"),
+    store: els.receiptStore.value.trim() || "Unknown store",
+    location: els.receiptLocation.value.trim() || "Unknown location",
+    date: els.receiptDate.value || new Date().toISOString().slice(0, 10),
+    subtotal: Number(els.receiptSubtotal.value) || 0,
+    tax: Number(els.receiptTax.value) || 0,
+    total: Number(els.receiptTotal.value) || 0,
+    source: receiptDraft?.source || "manual review",
+    originalFileName: els.receiptFile?.files?.[0]?.name || "",
+    savedAt: new Date().toISOString(),
+    items
+  };
+}
+
+function saveReceiptFromReview() {
+  const receipt = readReceiptReview();
+  if (receipt.items.length === 0) return;
+
+  profile.receipts.unshift(receipt);
+  profile.priceObservations.unshift(...receipt.items.map((item) => ({
+    id: makeId("price"),
+    receiptId: receipt.id,
+    itemName: item.name,
+    store: receipt.store,
+    location: receipt.location,
+    date: receipt.date,
+    quantity: item.quantity,
+    unitPrice: item.unitPrice
+  })));
+  profile.receipts = profile.receipts.slice(0, 50);
+  profile.priceObservations = profile.priceObservations.slice(0, 500);
+  saveProfile();
+  clearReceiptReview();
+  renderCurrentPage();
+}
+
+function renderReceiptHistory() {
+  if (!els.receiptHistory) return;
+  if (els.receiptHistoryCount) els.receiptHistoryCount.textContent = profile.receipts.length;
+  els.receiptHistory.innerHTML = profile.receipts.length
+    ? profile.receipts.map((receipt) => `
+      <article class="history-card">
+        <div>
+          <strong>${receipt.store}</strong>
+          <p class="subtle">${receipt.location} - ${receipt.date}</p>
+          <p class="subtle">${receipt.items.length} items - ${money(receipt.total)}</p>
+        </div>
+        <div class="card-actions">
+          <a class="ghost-btn" href="profile.html">Profile</a>
+        </div>
+      </article>
+    `).join("")
+    : `<div class="basket-empty">Parsed receipts will appear here after review.</div>`;
+}
+
 function productListCard(product, source) {
   const image = product.imageUrl
     ? `<img src="${product.imageUrl}" alt="" />`
@@ -251,6 +387,15 @@ function renderSaved() {
 function renderProfile() {
   if (els.profileNameInput) els.profileNameInput.value = profile.name;
   if (!els.profileStats) return;
+  const recentReceipts = profile.receipts.slice(0, 5).map((receipt) => `
+    <article class="archive-row">
+      <div>
+        <strong>${receipt.store}</strong>
+        <p class="subtle">${receipt.location} - ${receipt.date} - ${receipt.items.length} items</p>
+      </div>
+      <strong>${money(receipt.total)}</strong>
+    </article>
+  `).join("");
   const archivedGroups = profile.archivedGroups.map((group) => `
     <article class="archive-row">
       <div>
@@ -279,8 +424,15 @@ function renderProfile() {
     <article class="profile-card">
       <strong>${profile.name}</strong>
       <p class="subtle">Local-only profile. Email sync can come later.</p>
-      <p>${profile.groups.length} list groups - ${profile.history.length} recent scans - ${profile.saved.length} saved products - ${profile.archivedGroups.length + profile.archivedSaved.length} archived items</p>
+      <p>${profile.groups.length} list groups - ${profile.history.length} recent scans - ${profile.saved.length} saved products - ${profile.receipts.length} receipts - ${profile.priceObservations.length} price observations</p>
     </article>
+    <section class="archive-section">
+      <div class="section-heading">
+        <h3>Receipt memory</h3>
+        <span>${profile.receipts.length}</span>
+      </div>
+      ${recentReceipts || `<div class="basket-empty">Receipt history will appear here after you save reviewed receipts.</div>`}
+    </section>
     <section class="archive-section">
       <div class="section-heading">
         <h3>Archived lists</h3>
@@ -303,6 +455,7 @@ function renderCurrentPage() {
   renderGroups();
   renderHistory();
   renderSaved();
+  renderReceiptHistory();
   renderProfile();
 }
 
@@ -354,3 +507,20 @@ els.historyList?.addEventListener("click", handleProductAction);
 els.savedList?.addEventListener("click", handleProductAction);
 els.groupCards?.addEventListener("click", handleGroupAction);
 els.profileStats?.addEventListener("click", handleProfileArchiveAction);
+els.receiptFile?.addEventListener("change", () => {
+  const file = els.receiptFile.files?.[0];
+  if (!file) return;
+  els.receiptFileName.textContent = file.name;
+  if (file.type.startsWith("image/")) {
+    const url = URL.createObjectURL(file);
+    els.receiptPreview.innerHTML = `<img src="${url}" alt="Uploaded receipt preview" />`;
+  } else {
+    els.receiptPreview.innerHTML = `<div class="basket-empty">${file.name} selected. PDF preview can come with backend processing.</div>`;
+  }
+});
+els.parseReceiptDemo?.addEventListener("click", () => renderReceiptReview(mockParsedReceipt()));
+els.resetReceiptReview?.addEventListener("click", clearReceiptReview);
+els.receiptForm?.addEventListener("submit", (event) => {
+  event.preventDefault();
+  saveReceiptFromReview();
+});

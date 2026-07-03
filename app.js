@@ -162,7 +162,9 @@ function defaultProfile() {
     history: [],
     saved: [],
     archivedGroups: [],
-    archivedSaved: []
+    archivedSaved: [],
+    receipts: [],
+    priceObservations: []
   };
 }
 
@@ -184,6 +186,8 @@ function loadProfile() {
   profile.saved = Array.isArray(profile.saved) ? profile.saved : [];
   profile.archivedGroups = Array.isArray(profile.archivedGroups) ? profile.archivedGroups : [];
   profile.archivedSaved = Array.isArray(profile.archivedSaved) ? profile.archivedSaved : [];
+  profile.receipts = Array.isArray(profile.receipts) ? profile.receipts : [];
+  profile.priceObservations = Array.isArray(profile.priceObservations) ? profile.priceObservations : [];
   basket = activeGroup().items;
 }
 
