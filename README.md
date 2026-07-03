@@ -131,7 +131,27 @@ npm run android:open
 
 OpenAI/OCR credentials for receipt processing should live on a backend, not in the Android app. See `docs/receipt-processing-api.md` for the planned API contract.
 
-To build an APK or run on a device, install Android Studio with a current Android SDK and JDK. This machine currently has Java 8, which is too old for modern Android Gradle builds.
+To build an APK or run on a device, install Android Studio with a current Android SDK and JDK. This project uses a Gradle/Android Gradle Plugin pairing that can run on Android Studio's bundled JDK. On this machine, use:
+
+```text
+C:\Program Files\Android\Android Studio\jbr
+```
+
+In Android Studio, set this under **Settings > Build, Execution, Deployment > Build Tools > Gradle > Gradle JDK**.
+
+Build a debug APK:
+
+```powershell
+npm run android:build
+```
+
+The debug APK is created at:
+
+```text
+android/app/build/outputs/apk/debug/app-debug.apk
+```
+
+The build script uses Android Studio's bundled JDK and writes the ignored `android/local.properties` file for the local SDK path.
 
 ## GitHub Pages
 

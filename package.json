@@ -9,6 +9,7 @@
     "cap": "node scripts/run-capacitor.js",
     "cap:sync": "npm run build:web && node scripts/run-capacitor.js sync android",
     "android:add": "npm run build:web && node scripts/run-capacitor.js add android",
+    "android:build": "npm run cap:sync && powershell -ExecutionPolicy Bypass -File scripts/build-android-debug.ps1",
     "android:open": "node scripts/run-capacitor.js open android",
     "android:run": "npm run build:web && node scripts/run-capacitor.js run android"
   },
