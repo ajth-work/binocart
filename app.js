@@ -887,6 +887,33 @@ function basketStoreSummary(items) {
   return Object.entries(stores).sort(([a], [b]) => a.localeCompare(b));
 }
 
+function pulseProductKey(type, storeName, brandName) {
+  return `pulse-${type}-${storeName.toLowerCase()}-${brandName.replace(/\s+/g, '-').toLowerCase()}`;
+}
+
+function cheapestPulseOption(type) {
+  const data = pulseData[type];
+  if (!data) return null;
+  const store = data.stores[0];
+  const option = [...store.options].sort((a, b) => a.price - b.price)[0];
+  return store && option ? { data, store, option } : null;
+}
+
+function pulseCartQuantity(type) {
+  const cheapest = cheapestPulseOption(type);
+  if (!cheapest) return 0;
+  const product = activeGroup().items.find((item) => item.upc === pulseProductKey(type, cheapest.store.name, cheapest.option.brand));
+  return product ? itemQuantity(product) : 0;
+}
+
+function renderPulseControls() {
+  document.querySelectorAll("[data-remove-cheapest]").forEach((button) => {
+    const quantity = pulseCartQuantity(button.dataset.removeCheapest);
+    button.classList.toggle("hidden", quantity === 0);
+    button.setAttribute("aria-label", quantity > 1 ? `Remove one from cart, ${quantity} currently added` : "Remove from cart");
+  });
+}
+
 function productStorePrice(product, storeName) {
   if (!hasPriceProfile(product)) return undefined;
   return product.stores.find((store) => store.name === storeName)?.price;
@@ -903,6 +930,22 @@ function addProductToBasket(product) {
     existing.quantity = itemQuantity(existing) + 1;
   } else {
     group.items.push(productSnapshot({ ...product, quantity: 1 }));
+  }
+  basket = group.items;
+  saveProfile();
+  renderBasket();
+  renderGroupCards();
+}
+
+function decrementProductInBasket(upc) {
+  const group = activeGroup();
+  const existing = group.items.find((item) => item.upc === upc);
+  if (!existing) return;
+  const quantity = itemQuantity(existing);
+  if (quantity > 1) {
+    existing.quantity = quantity - 1;
+  } else {
+    group.items = group.items.filter((item) => item.upc !== upc);
   }
   basket = group.items;
   saveProfile();
@@ -1018,6 +1061,7 @@ function renderBasket() {
       </div>
     `).join("");
   }
+  renderPulseControls();
   renderOptimizer();
   renderGroupSelect();
 }
@@ -1494,9 +1538,15 @@ els.profileStats?.addEventListener("click", (event) => {
 document.querySelector(".pulse-grid")?.addEventListener("click", (e) => {
   const card = e.target.closest("[data-pulse-trigger]");
   const quickAdd = e.target.closest("[data-add-cheapest]");
+  const quickRemove = e.target.closest("[data-remove-cheapest]");
 
   if (quickAdd) {
     addPulseItem(quickAdd.dataset.addCheapest);
+    return;
+  }
+
+  if (quickRemove) {
+    removePulseItem(quickRemove.dataset.removeCheapest);
     return;
   }
 
@@ -1621,7 +1671,7 @@ function addPulseItem(type, storeName, brandName) {
   if (!option) return;
 
   const product = {
-    upc: `pulse-${type}-${store.name.toLowerCase()}-${option.brand.replace(/\s+/g, '-').toLowerCase()}`,
+    upc: pulseProductKey(type, store.name, option.brand),
     name: `${data.name}`,
     brand: option.brand,
     size: "Standard",
@@ -1631,6 +1681,12 @@ function addPulseItem(type, storeName, brandName) {
 
   addProductToBasket(product);
   closeBreakdown();
+}
+
+function removePulseItem(type) {
+  const cheapest = cheapestPulseOption(type);
+  if (!cheapest) return;
+  decrementProductInBasket(pulseProductKey(type, cheapest.store.name, cheapest.option.brand));
 }
 
 function setupRadialMenu() {

@@ -467,15 +467,13 @@ a {
   margin-top: auto;
 }
 
-.quick-add-btn {
+.quick-add-btn,
+.quick-remove-btn {
   position: absolute;
-  right: 8px;
   bottom: 8px;
   width: 34px;
   height: 34px;
   border-radius: 10px;
-  background: var(--green);
-  color: #07120c;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -484,16 +482,32 @@ a {
   border: none;
   padding: 0;
   line-height: 0;
-  box-shadow: 0 4px 10px rgba(46, 204, 113, 0.25);
   transition: transform 0.1s ease, background 0.2s ease;
   z-index: 3;
 }
 
-.quick-add-btn span {
+.quick-add-btn {
+  right: 8px;
+  background: var(--green);
+  color: #07120c;
+  box-shadow: 0 4px 10px rgba(46, 204, 113, 0.25);
+}
+
+.quick-remove-btn {
+  right: 50px;
+  background: rgba(255, 107, 107, 0.18);
+  color: var(--red);
+  border: 1px solid rgba(255, 107, 107, 0.32);
+  box-shadow: 0 4px 10px rgba(255, 107, 107, 0.12);
+}
+
+.quick-add-btn span,
+.quick-remove-btn span {
   margin-top: -3px; /* Precise visual centering for the plus glyph */
 }
 
-.quick-add-btn:active {
+.quick-add-btn:active,
+.quick-remove-btn:active {
   transform: scale(0.9);
 }
 

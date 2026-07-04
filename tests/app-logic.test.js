@@ -61,3 +61,25 @@ test("adding the same product increments basket quantity", () => {
   assert.equal(element("#basketTotal").textContent, "$6.98 estimated");
   assert.match(element("#basketStores").innerHTML, /Aldi x2/);
 });
+
+test("removing a pulse item decrements quantity before removing the row", () => {
+  const { context, profile, element } = createHarness("app.js");
+
+  context.loadProfile();
+  context.addPulseItem("butter");
+  context.addPulseItem("butter");
+  context.removePulseItem("butter");
+
+  let activeGroup = profile().groups[0];
+  assert.equal(activeGroup.items.length, 1);
+  assert.equal(activeGroup.items[0].quantity, 1);
+  assert.equal(element("#basketCount").textContent, "1 item");
+  assert.equal(element("#basketTotal").textContent, "$3.49 estimated");
+
+  context.removePulseItem("butter");
+
+  activeGroup = profile().groups[0];
+  assert.equal(activeGroup.items.length, 0);
+  assert.equal(element("#basketCount").textContent, "0 items");
+  assert.equal(element("#basketTotal").textContent, "$0.00 estimated");
+});
