@@ -284,6 +284,8 @@ a {
     display: grid;
     justify-content: start;
     gap: var(--space-md);
+    min-width: 0;
+    container-type: inline-size;
   }
 
   .dashboard-pane > .search-hero {
@@ -364,6 +366,30 @@ a {
 .market-pulse {
   display: grid;
   gap: var(--space-md);
+}
+
+.pulse-pages {
+  display: flex;
+  gap: 0;
+  margin: 0 calc(var(--space-sm) * -1);
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0 var(--space-sm) 2px;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  touch-action: pan-x pan-y;
+  -webkit-overflow-scrolling: touch;
+}
+
+.pulse-pages::-webkit-scrollbar {
+  display: none;
+}
+
+.pulse-page {
+  flex: 0 0 100%;
+  min-width: 0;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
 }
 
 .live-indicator {
@@ -462,6 +488,32 @@ a {
 .trend-badge.down { background: rgba(46, 204, 113, 0.1); color: var(--green); }
 .trend-badge.up { background: rgba(239, 68, 68, 0.1); color: var(--red); }
 .trend-badge.stable { background: var(--panel); color: var(--muted); border: 1px solid var(--line); }
+.trend-badge.deal { background: rgba(255, 180, 0, 0.12); color: var(--amber); }
+.trend-badge.shortage { background: rgba(82, 168, 255, 0.12); color: var(--blue); }
+
+.pulse-pagination {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  padding-top: var(--space-xs);
+}
+
+.pulse-dot {
+  width: 9px;
+  height: 9px;
+  min-height: 0;
+  padding: 0;
+  border: 1px solid rgba(154, 167, 184, 0.4);
+  border-radius: 999px;
+  background: rgba(154, 167, 184, 0.24);
+  transition: width 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+}
+
+.pulse-dot.active {
+  width: 24px;
+  border-color: rgba(46, 204, 113, 0.75);
+  background: var(--green);
+}
 
 .pulse-body {
   margin-top: auto;
@@ -514,6 +566,8 @@ a {
 .recommendation-panel {
   display: grid;
   gap: var(--space-lg);
+  min-width: 0;
+  overflow: hidden;
   padding: var(--space-xl);
   border: 1px solid rgba(46, 204, 113, 0.24);
   border-radius: var(--radius-lg);
@@ -526,12 +580,14 @@ a {
 .recommendation-header {
   display: grid;
   gap: var(--space-sm);
+  min-width: 0;
+  container-type: inline-size;
 }
 
 .recommendation-header h2 {
   max-width: none;
   margin: 0;
-  font-size: clamp(1.9rem, 3vw, 3rem);
+  font-size: clamp(1.9rem, 7cqi, 3rem);
   line-height: 1;
 }
 
@@ -554,12 +610,14 @@ a {
   max-width: 64ch;
   margin: 0;
   color: var(--muted);
+  overflow-wrap: anywhere;
 }
 
 .recommendation-metrics {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
   gap: var(--space-ms);
+  min-width: 0;
 }
 
 .recommendation-metrics div {
@@ -1264,6 +1322,8 @@ h3 {
 
   .dashboard-pane > .topbar {
     grid-area: topbar;
+    min-width: 0;
+    container-type: inline-size;
   }
 
   .dashboard-pane > .search-hero {
@@ -1280,9 +1340,11 @@ h3 {
   }
 
   .dashboard-pane h1 {
-    max-width: none;
-    white-space: nowrap;
-    font-size: clamp(2.75rem, 3.9vw, 4.25rem);
+    max-width: 100%;
+    overflow-wrap: normal;
+    text-wrap: balance;
+    font-size: clamp(2.5rem, 5.4cqi, 4.25rem);
+    line-height: 1.05;
   }
 
   .dashboard-pane .location-pill {
@@ -1311,7 +1373,7 @@ h3 {
   }
 
   .app-shell > .recommendation-panel {
-    grid-template-columns: minmax(720px, 0.56fr) minmax(520px, 0.44fr);
+    grid-template-columns: minmax(0, 0.58fr) minmax(0, 0.42fr);
     grid-template-rows: auto auto auto;
     align-items: start;
     column-gap: var(--space-2xl);
@@ -1324,7 +1386,8 @@ h3 {
   }
 
   .app-shell > .recommendation-panel .recommendation-header h2 {
-    white-space: nowrap;
+    white-space: normal;
+    text-wrap: balance;
   }
 
   .app-shell > .recommendation-panel .confidence-pill {
@@ -1357,13 +1420,29 @@ h3 {
   }
 }
 
+@media (min-width: 901px) and (max-width: 1180px) {
+  .dashboard-pane {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "topbar"
+      "search"
+      "pulse"
+      "basket";
+  }
+
+  .dashboard-pane h1 {
+    white-space: normal;
+    font-size: clamp(2.75rem, 8cqi, 4.25rem);
+  }
+}
+
 @media (max-width: 1200px) {
   .app-shell > .recommendation-panel .recommendation-header h2 {
     white-space: normal;
   }
 }
 
-@media (min-width: 901px) and (max-width: 1320px) {
+@media (min-width: 901px) and (max-width: 1500px) {
   .app-shell > .recommendation-panel {
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: none;

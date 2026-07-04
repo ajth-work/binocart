@@ -217,13 +217,17 @@ const els = {
   navPlusAction: document.querySelector("#navPlusAction"),
   actionOverlay: document.querySelector("#actionOverlay"),
   closeActions: document.querySelector("#closeActions"),
-  actionBarcodeScan: document.querySelector("#actionBarcodeScan")
+  actionBarcodeScan: document.querySelector("#actionBarcodeScan"),
+  pulsePages: document.querySelector("#pulsePages"),
+  pulsePagination: document.querySelector("#pulsePagination")
 };
 
 const pulseData = {
   eggs: {
     name: "Eggs (Large, Dozen)",
-    icon: "🥚",
+    icon: "\uD83E\uDD5A",
+    signal: { label: "-$0.42", type: "down" },
+    category: "Dairy",
     shelfLife: 21,
     stores: [
       {
@@ -253,7 +257,9 @@ const pulseData = {
   },
   bread: {
     name: "White Bread (Loaf)",
-    icon: "🍞",
+    icon: "\uD83C\uDF5E",
+    signal: { label: "+$0.10", type: "up" },
+    category: "Bakery",
     shelfLife: 7,
     stores: [
       {
@@ -283,7 +289,9 @@ const pulseData = {
   },
   milk: {
     name: "Whole Milk (Gallon)",
-    icon: "🥛",
+    icon: "\uD83E\uDD5B",
+    signal: { label: "-$0.15", type: "down" },
+    category: "Dairy",
     shelfLife: 10,
     stores: [
       {
@@ -304,7 +312,9 @@ const pulseData = {
   },
   bananas: {
     name: "Bananas (lb)",
-    icon: "🍌",
+    icon: "\uD83C\uDF4C",
+    signal: { label: "Stable", type: "stable" },
+    category: "Produce",
     shelfLife: 5,
     stores: [
       {
@@ -325,7 +335,9 @@ const pulseData = {
   },
   butter: {
     name: "Unsalted Butter (16oz)",
-    icon: "🧈",
+    icon: "\uD83E\uDDC8",
+    signal: { label: "-$0.50", type: "down" },
+    category: "Dairy",
     shelfLife: 30,
     stores: [
       {
@@ -343,6 +355,186 @@ const pulseData = {
         ]
       }
     ]
+  },
+  chickenBreast: {
+    name: "Chicken Breast (lb)",
+    icon: "\uD83C\uDF57",
+    signal: { label: "Low stock", type: "shortage" },
+    category: "Meat",
+    shelfLife: 3,
+    stores: [
+      { name: "Aldi", distance: "1.2 mi", options: [{ brand: "Kirkwood", price: 2.49, analysis: "Weekend protein promo is drawing down inventory quickly." }] },
+      { name: "Meijer", distance: "3.1 mi", options: [{ brand: "Fresh Thyme", price: 3.29, analysis: "Better availability, but price is back near its monthly average." }] },
+      { name: "Kroger", distance: "0.8 mi", options: [{ brand: "Simple Truth", price: 4.49, analysis: "Organic pack is available, but premium remains high." }] }
+    ]
+  },
+  coffee: {
+    name: "Ground Coffee (30oz)",
+    icon: "\u2615",
+    signal: { label: "+$1.20", type: "up" },
+    category: "Pantry",
+    shelfLife: 180,
+    stores: [
+      { name: "Walmart", distance: "2.5 mi", options: [{ brand: "Great Value", price: 8.98, analysis: "Still the best local price despite category inflation." }] },
+      { name: "Kroger", distance: "0.8 mi", options: [{ brand: "Folgers", price: 11.49, analysis: "Name-brand pricing jumped after the last ad cycle ended." }] },
+      { name: "Target", distance: "4.8 mi", options: [{ brand: "Good & Gather", price: 9.99, analysis: "Store brand is steady, but package size is smaller." }] }
+    ]
+  },
+  rice: {
+    name: "Jasmine Rice (5 lb)",
+    icon: "\uD83C\uDF5A",
+    signal: { label: "Deal", type: "deal" },
+    category: "Pantry",
+    shelfLife: 365,
+    stores: [
+      { name: "Meijer", distance: "3.1 mi", options: [{ brand: "Meijer Brand", price: 4.79, analysis: "Multi-week low for a staple pantry item." }] },
+      { name: "Walmart", distance: "2.5 mi", options: [{ brand: "Mahatma", price: 6.24, analysis: "Name brand is stable but not the value leader today." }] },
+      { name: "Kroger", distance: "0.8 mi", options: [{ brand: "Kroger Brand", price: 5.49, analysis: "Loyalty price helps, but Meijer is still cleaner value." }] }
+    ]
+  },
+  soda: {
+    name: "Cola 12-Pack",
+    icon: "\uD83E\uDD64",
+    signal: { label: "BOGO", type: "deal" },
+    category: "Beverages",
+    shelfLife: 270,
+    stores: [
+      { name: "Kroger", distance: "0.8 mi", options: [{ brand: "Coca-Cola", price: 4.99, analysis: "Buy-one-get-one offer beats warehouse club equivalent today." }] },
+      { name: "Walmart", distance: "2.5 mi", options: [{ brand: "Pepsi", price: 7.48, analysis: "Everyday price is high relative to Kroger promotion." }] },
+      { name: "Meijer", distance: "3.1 mi", options: [{ brand: "Meijer Cola", price: 4.49, analysis: "Store brand is cheap but not part of the premium brand deal." }] }
+    ]
+  },
+  diapers: {
+    name: "Diapers Size 4",
+    icon: "\uD83E\uDDF7",
+    signal: { label: "-$3.00", type: "down" },
+    category: "Baby",
+    shelfLife: 730,
+    stores: [
+      { name: "Target", distance: "4.8 mi", options: [{ brand: "Up & Up", price: 18.99, analysis: "Circle promo makes Target the best bulk option today." }] },
+      { name: "Walmart", distance: "2.5 mi", options: [{ brand: "Parents Choice", price: 20.48, analysis: "Consistent stock, but no active rollback." }] },
+      { name: "Kroger", distance: "0.8 mi", options: [{ brand: "Pampers", price: 27.99, analysis: "Brand premium is not offset by current coupons." }] }
+    ]
+  },
+  strawberries: {
+    name: "Strawberries (1 lb)",
+    icon: "\uD83C\uDF53",
+    signal: { label: "+$0.80", type: "up" },
+    category: "Produce",
+    shelfLife: 4,
+    stores: [
+      { name: "Meijer", distance: "3.1 mi", options: [{ brand: "Fresh Produce", price: 2.99, analysis: "Best balance of price and availability after a weather-driven spike." }] },
+      { name: "Aldi", distance: "1.2 mi", options: [{ brand: "Produce", price: 3.29, analysis: "Usually cheapest, but stock is thinner this week." }] },
+      { name: "Kroger", distance: "0.8 mi", options: [{ brand: "Driscoll's", price: 4.49, analysis: "Premium pack is available but no sale is active." }] }
+    ]
+  },
+  cheddar: {
+    name: "Cheddar Cheese (8oz)",
+    icon: "\uD83E\uDDC0",
+    signal: { label: "-$0.70", type: "down" },
+    category: "Dairy",
+    shelfLife: 45,
+    stores: [
+      { name: "Aldi", distance: "1.2 mi", options: [{ brand: "Happy Farms", price: 1.79, analysis: "Sharp drop after regional dairy reset." }] },
+      { name: "Kroger", distance: "0.8 mi", options: [{ brand: "Kroger Brand", price: 2.49, analysis: "Stable shelf price, but Aldi leads today." }] },
+      { name: "Target", distance: "4.8 mi", options: [{ brand: "Good & Gather", price: 2.69, analysis: "Convenient pickup option but higher than local grocery." }] }
+    ]
+  },
+  cereal: {
+    name: "Family Cereal Box",
+    icon: "\uD83E\uDD63",
+    signal: { label: "Coupon", type: "deal" },
+    category: "Breakfast",
+    shelfLife: 240,
+    stores: [
+      { name: "Kroger", distance: "0.8 mi", options: [{ brand: "Kroger Brand", price: 2.29, analysis: "Digital coupon brings family-size box under Walmart." }] },
+      { name: "Walmart", distance: "2.5 mi", options: [{ brand: "Great Value", price: 2.68, analysis: "Reliable value but no special local signal." }] },
+      { name: "Meijer", distance: "3.1 mi", options: [{ brand: "General Mills", price: 4.99, analysis: "Brand box is high unless paired with mPerks." }] }
+    ]
+  },
+  oliveOil: {
+    name: "Olive Oil (16.9oz)",
+    icon: "\uD83E\uDED2",
+    signal: { label: "+$2.10", type: "up" },
+    category: "Pantry",
+    shelfLife: 540,
+    stores: [
+      { name: "Aldi", distance: "1.2 mi", options: [{ brand: "Simply Nature", price: 7.49, analysis: "Still the least expensive local bottle despite global olive oil pressure." }] },
+      { name: "Kroger", distance: "0.8 mi", options: [{ brand: "Private Selection", price: 10.99, analysis: "Premium bottle rose sharply compared with last month." }] },
+      { name: "Target", distance: "4.8 mi", options: [{ brand: "Good & Gather", price: 8.99, analysis: "Middle price with steady pickup availability." }] }
+    ]
+  },
+  paperTowels: {
+    name: "Paper Towels (6 rolls)",
+    icon: "\uD83E\uDDFB",
+    signal: { label: "Spike", type: "up" },
+    category: "Household",
+    shelfLife: 1000,
+    stores: [
+      { name: "Walmart", distance: "2.5 mi", options: [{ brand: "Great Value", price: 8.97, analysis: "Best current shelf price after name brands moved up." }] },
+      { name: "Kroger", distance: "0.8 mi", options: [{ brand: "Bounty", price: 14.49, analysis: "Name brand is in a price spike window." }] },
+      { name: "Target", distance: "4.8 mi", options: [{ brand: "Up & Up", price: 9.79, analysis: "Good backup if Walmart stock runs low." }] }
+    ]
+  },
+  dogFood: {
+    name: "Dry Dog Food (15 lb)",
+    icon: "\uD83D\uDC36",
+    signal: { label: "Restock", type: "stable" },
+    category: "Pet",
+    shelfLife: 365,
+    stores: [
+      { name: "Meijer", distance: "3.1 mi", options: [{ brand: "Purina One", price: 24.99, analysis: "Fresh restock and temporary shelf tag beats Target today." }] },
+      { name: "Target", distance: "4.8 mi", options: [{ brand: "Kindfull", price: 26.99, analysis: "Private label is available but not discounted." }] },
+      { name: "Walmart", distance: "2.5 mi", options: [{ brand: "Ol' Roy", price: 21.98, analysis: "Lowest price, but fewer nutrition signals for comparison." }] }
+    ]
+  },
+  spinach: {
+    name: "Baby Spinach (5oz)",
+    icon: "\uD83E\uDD6C",
+    signal: { label: "Fresh", type: "stable" },
+    category: "Produce",
+    shelfLife: 5,
+    stores: [
+      { name: "Aldi", distance: "1.2 mi", options: [{ brand: "Little Salad Bar", price: 1.99, analysis: "Freshness signal is strong after morning restock." }] },
+      { name: "Kroger", distance: "0.8 mi", options: [{ brand: "Simple Truth", price: 3.49, analysis: "Organic option carries a meaningful premium today." }] },
+      { name: "Meijer", distance: "3.1 mi", options: [{ brand: "Fresh Produce", price: 2.79, analysis: "Stable option, but Aldi is clearly lower." }] }
+    ]
+  },
+  pasta: {
+    name: "Pasta (16oz)",
+    icon: "\uD83C\uDF5D",
+    signal: { label: "-$0.30", type: "down" },
+    category: "Pantry",
+    shelfLife: 730,
+    stores: [
+      { name: "Kroger", distance: "0.8 mi", options: [{ brand: "Kroger Brand", price: 1.00, analysis: "Dollar sale makes this a strong pantry restock item." }] },
+      { name: "Walmart", distance: "2.5 mi", options: [{ brand: "Great Value", price: 1.12, analysis: "Everyday price is close but not leading today." }] },
+      { name: "Aldi", distance: "1.2 mi", options: [{ brand: "Reggano", price: 1.09, analysis: "Aldi is competitive but Kroger sale wins." }] }
+    ]
+  },
+  salmon: {
+    name: "Atlantic Salmon (lb)",
+    icon: "\uD83D\uDC1F",
+    signal: { label: "Limited", type: "shortage" },
+    category: "Seafood",
+    shelfLife: 2,
+    stores: [
+      { name: "Kroger", distance: "0.8 mi", options: [{ brand: "Fresh Seafood", price: 9.99, analysis: "Best local price, but counter quantity is limited." }] },
+      { name: "Meijer", distance: "3.1 mi", options: [{ brand: "Fresh Seafood", price: 11.49, analysis: "More reliable stock if the closer store sells out." }] },
+      { name: "Walmart", distance: "2.5 mi", options: [{ brand: "Frozen Atlantic", price: 8.98, analysis: "Frozen option is cheaper but not equivalent freshness." }] }
+    ]
+  },
+  laundryDetergent: {
+    name: "Laundry Detergent",
+    icon: "\uD83E\uDDFC",
+    signal: { label: "-$4.00", type: "down" },
+    category: "Household",
+    shelfLife: 900,
+    stores: [
+      { name: "Target", distance: "4.8 mi", options: [{ brand: "Tide", price: 12.99, analysis: "Gift card promo makes premium detergent unusually competitive." }] },
+      { name: "Walmart", distance: "2.5 mi", options: [{ brand: "Gain", price: 14.97, analysis: "Shelf price is steady, but no matching promo." }] },
+      { name: "Kroger", distance: "0.8 mi", options: [{ brand: "Kroger Brand", price: 10.49, analysis: "Store brand is cheaper but smaller load count." }] }
+    ]
   }
 };
 
@@ -358,6 +550,7 @@ let basket = [];
 let optimizerMode = "single";
 let activeViewName = "scan";
 const viewScrollPositions = {};
+const pulsePageSizes = [6, 6, 6, 2];
 const profileKey = "binocart.profile.v1";
 const legacyProfileKey = "pricescout.profile.v1";
 
@@ -887,16 +1080,68 @@ function basketStoreSummary(items) {
   return Object.entries(stores).sort(([a], [b]) => a.localeCompare(b));
 }
 
-function pulseProductKey(type, storeName, brandName) {
-  return `pulse-${type}-${storeName.toLowerCase()}-${brandName.replace(/\s+/g, '-').toLowerCase()}`;
+function pulseEntries() {
+  return Object.entries(pulseData);
+}
+
+function pulsePages() {
+  const entries = pulseEntries();
+  let offset = 0;
+  return pulsePageSizes.map((size) => {
+    const page = entries.slice(offset, offset + size);
+    offset += size;
+    return page;
+  });
 }
 
 function cheapestPulseOption(type) {
   const data = pulseData[type];
   if (!data) return null;
-  const store = data.stores[0];
-  const option = [...store.options].sort((a, b) => a.price - b.price)[0];
-  return store && option ? { data, store, option } : null;
+  return data.stores
+    .flatMap((store) => store.options.map((option) => ({ data, store, option })))
+    .sort((a, b) => a.option.price - b.option.price)[0] || null;
+}
+
+function pulseCardMarkup(type, item) {
+  const cheapest = cheapestPulseOption(type);
+  const signal = item.signal || { label: "Watch", type: "stable" };
+  return `
+    <article class="pulse-card square-card" data-pulse-trigger="${type}">
+      <div class="pulse-header"><span class="pulse-icon">${item.icon}</span><span class="trend-badge ${signal.type}">${signal.label}</span></div>
+      <div class="pulse-body"><strong>${item.name}</strong><p>${cheapest ? `Best: ${money(cheapest.option.price)} at ${cheapest.store.name}` : "Needs local price"}</p></div>
+      <button class="quick-remove-btn hidden" data-remove-cheapest="${type}" aria-label="Remove ${item.name} from cart"><span>-</span></button>
+      <button class="quick-add-btn" data-add-cheapest="${type}" aria-label="Add ${item.name} to cart"><span>+</span></button>
+    </article>
+  `;
+}
+
+function updatePulsePagination(activeIndex) {
+  if (!els.pulsePagination) return;
+  els.pulsePagination.querySelectorAll("[data-pulse-page-dot]").forEach((dot, index) => {
+    const active = index === activeIndex;
+    dot.classList.toggle("active", active);
+    dot.setAttribute("aria-current", active ? "page" : "false");
+  });
+}
+
+function renderPulseFeed() {
+  if (!els.pulsePages || !els.pulsePagination) return;
+  const pages = pulsePages();
+  els.pulsePages.innerHTML = pages.map((page, index) => `
+    <div class="pulse-page" data-pulse-page="${index}" aria-label="Pulse page ${index + 1} of ${pages.length}">
+      <div class="pulse-grid">
+        ${page.map(([type, item]) => pulseCardMarkup(type, item)).join("")}
+      </div>
+    </div>
+  `).join("");
+  els.pulsePagination.innerHTML = pages.map((_, index) => `
+    <button type="button" class="pulse-dot ${index === 0 ? "active" : ""}" data-pulse-page-dot="${index}" aria-label="Go to Pulse page ${index + 1}" aria-current="${index === 0 ? "page" : "false"}"></button>
+  `).join("");
+  renderPulseControls();
+}
+
+function pulseProductKey(type, storeName, brandName) {
+  return `pulse-${type}-${storeName.toLowerCase()}-${brandName.replace(/\s+/g, '-').toLowerCase()}`;
 }
 
 function pulseCartQuantity(type) {
@@ -1535,7 +1780,7 @@ els.profileStats?.addEventListener("click", (event) => {
 });
 
 // Pulse & Modal Listeners
-document.querySelector(".pulse-grid")?.addEventListener("click", (e) => {
+els.pulsePages?.addEventListener("click", (e) => {
   const card = e.target.closest("[data-pulse-trigger]");
   const quickAdd = e.target.closest("[data-add-cheapest]");
   const quickRemove = e.target.closest("[data-remove-cheapest]");
@@ -1553,6 +1798,19 @@ document.querySelector(".pulse-grid")?.addEventListener("click", (e) => {
   if (card) {
     openBreakdown(card.dataset.pulseTrigger);
   }
+});
+
+els.pulsePages?.addEventListener("scroll", () => {
+  const width = els.pulsePages.clientWidth || 1;
+  updatePulsePagination(Math.round(els.pulsePages.scrollLeft / width));
+});
+
+els.pulsePagination?.addEventListener("click", (event) => {
+  const dot = event.target.closest("[data-pulse-page-dot]");
+  if (!dot || !els.pulsePages) return;
+  const index = Number(dot.dataset.pulsePageDot);
+  els.pulsePages.scrollTo({ left: index * els.pulsePages.clientWidth, behavior: "smooth" });
+  updatePulsePagination(index);
 });
 
 els.closeModal?.addEventListener("click", closeBreakdown);
@@ -1663,10 +1921,13 @@ function closeBreakdown() {
 
 function addPulseItem(type, storeName, brandName) {
   const data = pulseData[type];
-  const store = storeName ? data.stores.find(s => s.name === storeName) : data.stores[0];
+  if (!data) return;
+  const cheapest = cheapestPulseOption(type);
+  const store = storeName ? data.stores.find(s => s.name === storeName) : cheapest?.store;
+  if (!store) return;
   const option = brandName
     ? store.options.find(o => o.brand === brandName)
-    : [...store.options].sort((a, b) => a.price - b.price)[0];
+    : (store === cheapest?.store ? cheapest.option : [...store.options].sort((a, b) => a.price - b.price)[0]);
 
   if (!option) return;
 
@@ -1717,6 +1978,7 @@ if (initialGroup && profile.groups.some((group) => group.id === initialGroup)) {
   basket = activeGroup().items;
   saveProfile();
 }
+renderPulseFeed();
 renderBasket();
 renderHistory();
 renderSaved();

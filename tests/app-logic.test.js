@@ -45,6 +45,26 @@ test("optimizer compares one-store and multi-store plans", () => {
   assert.ok(multi.reduce((sum, stop) => sum + stop.total, 0) <= single.total);
 });
 
+test("market pulse dataset is paged into 6/6/6/2 varied items", () => {
+  const { context, element } = createHarness("app.js");
+  const entries = context.pulseEntries();
+  const pages = context.pulsePages();
+  const categories = new Set(entries.map(([, item]) => item.category));
+  const signalTypes = new Set(entries.map(([, item]) => item.signal.type));
+  const stores = new Set(entries.flatMap(([, item]) => item.stores.map((store) => store.name)));
+
+  assert.equal(entries.length, 20);
+  assert.deepEqual(Array.from(pages, (page) => page.length), [6, 6, 6, 2]);
+  assert.ok(categories.size >= 8);
+  assert.ok(stores.size >= 5);
+  assert.ok(signalTypes.has("down"));
+  assert.ok(signalTypes.has("up"));
+  assert.ok(signalTypes.has("deal"));
+  assert.ok(signalTypes.has("shortage"));
+  assert.match(element("#pulsePages").innerHTML, /data-pulse-page="0"/);
+  assert.match(element("#pulsePagination").innerHTML, /data-pulse-page-dot="3"/);
+});
+
 test("adding the same product increments basket quantity", () => {
   const { context, profile, element } = createHarness("app.js");
 
