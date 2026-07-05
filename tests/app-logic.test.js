@@ -65,6 +65,16 @@ test("market pulse dataset is paged into 6/6/6/2 varied items", () => {
   assert.match(element("#pulsePagination").innerHTML, /data-pulse-page-dot="3"/);
 });
 
+test("pulse carousel chooses the nearest focused page after partial scroll", () => {
+  const { context } = createHarness("app.js");
+  const offsets = [0, 720, 1440, 2160];
+
+  assert.equal(context.nearestPulsePageIndex(190, offsets), 0);
+  assert.equal(context.nearestPulsePageIndex(430, offsets), 1);
+  assert.equal(context.nearestPulsePageIndex(1090, offsets), 2);
+  assert.equal(context.nearestPulsePageIndex(2050, offsets), 3);
+});
+
 test("adding the same product increments basket quantity", () => {
   const { context, profile, element } = createHarness("app.js");
 

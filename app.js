@@ -549,6 +549,7 @@ let profile = null;
 let basket = [];
 let optimizerMode = "single";
 let activeViewName = "scan";
+let pulseSettleTimer = null;
 const viewScrollPositions = {};
 const pulsePageSizes = [6, 6, 6, 2];
 const profileKey = "binocart.profile.v1";
@@ -1122,6 +1123,47 @@ function updatePulsePagination(activeIndex) {
     dot.classList.toggle("active", active);
     dot.setAttribute("aria-current", active ? "page" : "false");
   });
+}
+
+function nearestPulsePageIndex(scrollLeft, pageOffsets) {
+  if (!pageOffsets.length) return 0;
+  return pageOffsets.reduce((nearestIndex, offset, index) => {
+    const nearestDistance = Math.abs(scrollLeft - pageOffsets[nearestIndex]);
+    const currentDistance = Math.abs(scrollLeft - offset);
+    return currentDistance < nearestDistance ? index : nearestIndex;
+  }, 0);
+}
+
+function pulsePageOffsets(container = els.pulsePages) {
+  if (!container) return [];
+  const containerLeft = container.offsetLeft || 0;
+  return Array.from(container.querySelectorAll("[data-pulse-page]"), (page) => {
+    const left = (page.offsetLeft || 0) - containerLeft;
+    return Math.max(0, left);
+  });
+}
+
+function activePulsePageIndex(container = els.pulsePages) {
+  if (!container) return 0;
+  const offsets = pulsePageOffsets(container);
+  return nearestPulsePageIndex(container.scrollLeft || 0, offsets);
+}
+
+function settlePulsePages(container = els.pulsePages, behavior = "smooth") {
+  if (!container) return;
+  const offsets = pulsePageOffsets(container);
+  const index = nearestPulsePageIndex(container.scrollLeft || 0, offsets);
+  const left = offsets[index] || 0;
+  updatePulsePagination(index);
+  if (Math.abs((container.scrollLeft || 0) - left) > 1) {
+    container.scrollTo({ left, behavior });
+  }
+}
+
+function schedulePulseSettle() {
+  if (!els.pulsePages) return;
+  window.clearTimeout(pulseSettleTimer);
+  pulseSettleTimer = window.setTimeout(() => settlePulsePages(), 120);
 }
 
 function renderPulseFeed() {
@@ -1801,15 +1843,16 @@ els.pulsePages?.addEventListener("click", (e) => {
 });
 
 els.pulsePages?.addEventListener("scroll", () => {
-  const width = els.pulsePages.clientWidth || 1;
-  updatePulsePagination(Math.round(els.pulsePages.scrollLeft / width));
+  updatePulsePagination(activePulsePageIndex());
+  schedulePulseSettle();
 });
 
 els.pulsePagination?.addEventListener("click", (event) => {
   const dot = event.target.closest("[data-pulse-page-dot]");
   if (!dot || !els.pulsePages) return;
   const index = Number(dot.dataset.pulsePageDot);
-  els.pulsePages.scrollTo({ left: index * els.pulsePages.clientWidth, behavior: "smooth" });
+  const offsets = pulsePageOffsets();
+  els.pulsePages.scrollTo({ left: offsets[index] || 0, behavior: "smooth" });
   updatePulsePagination(index);
 });
 
