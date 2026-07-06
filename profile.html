@@ -52,6 +52,22 @@
             </label>
           </div>
           <div class="settings-row">
+            <label class="toggle-switch">
+              <input type="checkbox" id="pulsePreviewToggle" />
+              <span class="slider"></span>
+              Show next Pulse preview
+            </label>
+            <p class="setting-hint">When off, the Pulse carousel settles with only the active page visible.</p>
+          </div>
+          <div class="settings-row">
+            <label class="toggle-switch">
+              <input type="checkbox" id="pulseFastSnapToggle" />
+              <span class="slider"></span>
+              Fast Pulse snap
+            </label>
+            <p class="setting-hint">Shortens the delay before the carousel settles after a swipe.</p>
+          </div>
+          <div class="settings-row">
             <label for="blurRange" class="setting-label">Menu background blur</label>
             <div class="range-container">
               <input type="range" id="blurRange" min="0" max="20" step="1" value="2" />

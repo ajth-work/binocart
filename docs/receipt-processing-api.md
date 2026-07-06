@@ -2,6 +2,8 @@
 
 BinoCart should not ship OpenAI or OCR provider credentials inside the Android app. The Capacitor app should send receipt images to a BinoCart backend, and the backend should call AI/OCR services with server-held credentials.
 
+Confirmed receipts should eventually feed the community price database: store locations, normalized products/SKUs, observed prices, purchase dates, confidence, and user-reviewed corrections.
+
 ## Parse Receipt
 
 `POST /api/receipts/parse`
@@ -72,3 +74,4 @@ The app sends the user-reviewed receipt. Confirmed line items become community p
 - Store original receipt images separately from normalized price observations.
 - Treat AI/OCR output as untrusted until the user confirms it.
 - Keep provider API keys only in backend environment variables.
+- Deduplicate repeated receipt submissions and preserve enough source metadata to audit questionable observations later.

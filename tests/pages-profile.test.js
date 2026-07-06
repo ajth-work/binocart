@@ -11,6 +11,8 @@ test("new profiles include archive and receipt collections", () => {
   assert.equal(profile.archivedSaved.length, 0);
   assert.equal(profile.receipts.length, 0);
   assert.equal(profile.priceObservations.length, 0);
+  assert.equal(profile.pulsePreview, false);
+  assert.equal(profile.pulseFastSnap, false);
 });
 
 test("archive, restore, and delete list workflow persists to localStorage", () => {

@@ -582,7 +582,9 @@ function defaultProfile() {
     showMenuLabels: false,
     menuBlur: 2,
     navStyle: "fab",
-    showPlusButton: false
+    showPlusButton: false,
+    pulsePreview: false,
+    pulseFastSnap: false
   };
 }
 
@@ -608,11 +610,14 @@ function loadProfile() {
   profile.priceObservations = Array.isArray(profile.priceObservations) ? profile.priceObservations : [];
   profile.showMenuLabels = typeof profile.showMenuLabels === "boolean" ? profile.showMenuLabels : false;
   profile.menuBlur = typeof profile.menuBlur === "number" ? profile.menuBlur : 2;
+  profile.pulsePreview = typeof profile.pulsePreview === "boolean" ? profile.pulsePreview : false;
+  profile.pulseFastSnap = typeof profile.pulseFastSnap === "boolean" ? profile.pulseFastSnap : false;
   profile.navStyle = "navbar";
   profile.showPlusButton = false;
 
   document.body?.classList.toggle("nav-style-navbar", profile.navStyle === "navbar");
   document.body?.classList.toggle("hide-nav-plus", true);
+  document.body?.classList.toggle("pulse-strict-snap", !profile.pulsePreview);
 
   basket = activeGroup().items;
 }
@@ -1163,7 +1168,8 @@ function settlePulsePages(container = els.pulsePages, behavior = "smooth") {
 function schedulePulseSettle() {
   if (!els.pulsePages) return;
   window.clearTimeout(pulseSettleTimer);
-  pulseSettleTimer = window.setTimeout(() => settlePulsePages(), 120);
+  const delay = profile?.pulseFastSnap ? 60 : 140;
+  pulseSettleTimer = window.setTimeout(() => settlePulsePages(), delay);
 }
 
 function renderPulseFeed() {

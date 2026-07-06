@@ -6,9 +6,9 @@ Bino is the intelligence behind BinoCart. Bino should feel helpful, calm, trustw
 
 Promise: Never wonder if you're making the right shopping decision.
 
-The current build is a static web app intended for GitHub Pages hosting.
+The current build is a static web app intended for GitHub Pages hosting, local LAN testing, and Android packaging through Capacitor.
 
-## What Is Done
+## Current Prototype
 
 - Camera barcode scanning works on supported mobile browsers through the native `BarcodeDetector` API.
 - Manual UPC/product lookup is available when camera scanning is not supported or a barcode is hard to read.
@@ -23,44 +23,47 @@ The current build is a static web app intended for GitHub Pages hosting.
 - Saved products are stored locally for quick reuse.
 - A local-only profile is auto-created for each browser.
 - Profile name editing works without requiring an email login yet.
+- Profile includes advanced UI controls for prototype tuning, including Pulse carousel preview/snap behavior.
 - Grocery list groups exist, including starter groups like `Weekly staples` and `Snacks for Derek`.
 - Products can be added to the active list from scan results, history, and saved products.
 - The list optimizer can compare a one-store trip against a multi-store trip for products that have local price profiles.
-- The app has separate pages for Scan, List, History, Saved, and Profile instead of one long scrolling page.
+- The app has separate pages for Intel, Scan, List, Receipts, History, Saved, and Profile instead of one long scrolling page.
 - Mobile bottom navigation and desktop top navigation link to real pages.
+- Local Market Pulse is a 20-item synthetic market feed grouped into four swipeable pages of 6/6/6/2 items.
+- Pulse cards support quick add/remove controls, active cart totals, and store summary pills.
+- Pulse card detail views show local store options and are the first prototype surface for future product/commodity intelligence pages.
+- Receipt upload/review is prototyped with local receipt memory and price observations.
 - The app can be hosted securely through GitHub Pages so phone camera permissions can work over HTTPS.
 
-## Current Step
+## Current Product Direction
 
-The current step is improving product recognition quality after real-world scanning. The app can scan and decode barcodes, but the product database coverage is still uneven. A major item like Folgers should feel reliable, so the current focus is:
+BinoCart is moving from "scan and compare" toward a broader independent shopping intelligence layer.
 
-- Make UPC lookup more forgiving across UPC-A, EAN-13, leading-zero, and shortened barcode variants.
-- Show the product thumbnail whenever the source database provides one.
-- Clearly label which source identified the product.
-- Avoid false confidence when a live product is found but local store prices are not available yet.
-- Add targeted fallbacks for common grocery brands that are likely to be scanned during testing.
+Near-term UX focus:
 
-Success for this step means a user can scan common pantry items and usually get at least a recognizable product identity, even before full local price data exists.
+- Keep Market Pulse focused on notable local market signals: deals, price spikes, shortages, fresh restocks, and meaningful price movement.
+- Make Pulse carousel paging feel natural on touch devices while settling cleanly on the active card set.
+- Redesign the Pulse product detail modal into a sleek commodity intelligence surface.
+- Use that detail surface as the early design pattern for future Explore pages.
+- Keep recommendation copy explainable, objective, and focused on the shopper's decision.
 
-## Next Step Should Produce
+## Product Intelligence Direction
 
-The next build step should produce a better `product intelligence` layer. That should include:
+The next major UX layer should make product and commodity pages feel like intelligence pages, not plain product tiles. This applies to Pulse detail views first and later to Explore.
 
-- A correction flow: if the app identifies the wrong product, the user can edit the name, brand, size, category, or image and save that correction locally.
-- Product context: identify whether the item is mainstream grocery, specialty/international grocery, household goods, personal care, or another category.
-- Store relevance: suggest likely store types based on the product context, such as Kroger/Walmart/Meijer for mainstream grocery or specialty markets for niche imports.
-- Alternatives: show nearby substitutes, generics, larger sizes, smaller sizes, and related products.
-- Pairings: suggest commonly paired items, such as peanut butter with bread and jelly.
-- Quick add controls on alternatives and pairings so related products can be added to a list without rescanning.
-- A stronger fallback scanner library, such as ZXing or html5-qrcode, for browsers that do not support `BarcodeDetector`.
+Useful product intelligence surfaces should include:
 
-The output of the next step should be a scan result that feels more like:
+- Commodity or product identity, such as eggs, milk, Kraft cheese, or a specific SKU.
+- Current best local price and best current store.
+- Store comparison across nearby retailers.
+- Brand/SKU alternatives and package-size context.
+- Recent price movement, deal/shortage/restock signals, and data freshness.
+- Confidence/explanation: why Bino is recommending the action.
+- Actions: add cheapest, save, alert, inspect options, or open deeper market history.
 
-1. `This is the exact product we found.`
-2. `Here are equivalent or better-value options.`
-3. `Here are things people often buy with it.`
-4. `Here is where it probably makes sense to shop for it.`
-5. `Add any of these to the right list group in one tap.`
+Pulse should surface urgent signals. Explore should reuse the same design language for deliberate market research across commodities, products, brands, stores, and local market areas.
+
+See `docs/product-intelligence-and-explore.md` for the working product direction.
 
 ## Later Product Direction
 
@@ -86,6 +89,48 @@ Then open:
 ```text
 http://127.0.0.1:4173/
 ```
+
+For another device on the same local network, bind to all interfaces:
+
+```powershell
+python -m http.server 4173 --bind 0.0.0.0
+```
+
+Then open the PC's LAN address, for example:
+
+```text
+http://192.168.0.2:4173/
+```
+
+The helper script also starts a local review server:
+
+```powershell
+npm run review
+```
+
+## Test And Build
+
+Run automated checks:
+
+```powershell
+npm test
+```
+
+Build the static web bundle used by Capacitor:
+
+```powershell
+npm run build:web
+```
+
+Avoid running `npm test` and `npm run build:web` in parallel because the build rewrites `www/` while static tests inspect generated assets.
+
+## Developer UI Controls
+
+Profile > Advanced UI Controls contains prototype-only settings stored in localStorage:
+
+- `Show next Pulse preview`: when off, the Local Market Pulse carousel settles with only the active Pulse card set visible.
+- `Fast Pulse snap`: shortens the delay before Pulse settles after a swipe.
+- Menu label and blur controls remain for testing the older radial menu.
 
 ## Phone Camera Note
 
@@ -164,3 +209,15 @@ In the GitHub repo settings:
 5. Save.
 
 The app will publish at the Pages URL shown by GitHub.
+
+Current Pages test URL:
+
+```text
+https://ajth-work.github.io/projects/Personal%20Projects/Barcode%20Scanner/
+```
+
+Deployment runs can be checked at:
+
+```text
+https://github.com/ajth-work/projects/actions
+```

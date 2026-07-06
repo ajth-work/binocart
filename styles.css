@@ -386,6 +386,11 @@ a {
   -webkit-overflow-scrolling: touch;
 }
 
+.pulse-strict-snap .pulse-pages {
+  margin-inline: 0;
+  padding-inline: 0;
+}
+
 .pulse-pages::-webkit-scrollbar {
   display: none;
 }
@@ -397,6 +402,10 @@ a {
   padding-right: var(--space-lg);
   scroll-snap-align: start;
   scroll-snap-stop: always;
+}
+
+.pulse-strict-snap .pulse-page {
+  padding-right: 0;
 }
 
 .live-indicator {
@@ -1479,6 +1488,13 @@ h3 {
 
 .settings-row {
   margin-top: var(--space-xs);
+}
+
+.setting-hint {
+  margin: 6px 0 0 60px;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.35;
 }
 
 .toggle-switch {

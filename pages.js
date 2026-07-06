@@ -31,6 +31,8 @@ const els = {
   navStyleToggle: document.querySelector("#navStyleToggle"),
   blurRange: document.querySelector("#blurRange"),
   blurValue: document.querySelector("#blurValue"),
+  pulsePreviewToggle: document.querySelector("#pulsePreviewToggle"),
+  pulseFastSnapToggle: document.querySelector("#pulseFastSnapToggle"),
   navPlusAction: document.querySelector("#navPlusAction"),
   actionOverlay: document.querySelector("#actionOverlay"),
   closeActions: document.querySelector("#closeActions"),
@@ -75,7 +77,9 @@ function defaultProfile() {
     priceObservations: [],
     showMenuLabels: false,
     menuBlur: 2,
-    navStyle: "fab"
+    navStyle: "fab",
+    pulsePreview: false,
+    pulseFastSnap: false
   };
 }
 
@@ -96,6 +100,8 @@ function loadProfile() {
   profile.priceObservations = Array.isArray(profile.priceObservations) ? profile.priceObservations : [];
   profile.showMenuLabels = typeof profile.showMenuLabels === "boolean" ? profile.showMenuLabels : false;
   profile.menuBlur = typeof profile.menuBlur === "number" ? profile.menuBlur : 2;
+  profile.pulsePreview = typeof profile.pulsePreview === "boolean" ? profile.pulsePreview : false;
+  profile.pulseFastSnap = typeof profile.pulseFastSnap === "boolean" ? profile.pulseFastSnap : false;
   profile.navStyle = "navbar";
   profile.showPlusButton = false;
 
@@ -128,6 +134,8 @@ function updateProfileHeader() {
   if (els.profileName) els.profileName.textContent = profile.name;
   if (els.profileButton) els.profileButton.title = `Profile: ${profile.name}`;
   if (els.showLabelsToggle) els.showLabelsToggle.checked = profile.showMenuLabels;
+  if (els.pulsePreviewToggle) els.pulsePreviewToggle.checked = profile.pulsePreview;
+  if (els.pulseFastSnapToggle) els.pulseFastSnapToggle.checked = profile.pulseFastSnap;
   if (els.navStyleToggle) els.navStyleToggle.checked = profile.navStyle === "navbar";
   if (els.blurRange) {
     els.blurRange.value = profile.menuBlur;
@@ -415,6 +423,8 @@ function renderProfile() {
   if (els.navStyleToggle) els.navStyleToggle.checked = profile.navStyle === "navbar";
   if (els.plusButtonToggle) els.plusButtonToggle.checked = false;
   if (els.showLabelsToggle) els.showLabelsToggle.checked = profile.showMenuLabels;
+  if (els.pulsePreviewToggle) els.pulsePreviewToggle.checked = profile.pulsePreview;
+  if (els.pulseFastSnapToggle) els.pulseFastSnapToggle.checked = profile.pulseFastSnap;
   if (els.blurRange) els.blurRange.value = profile.menuBlur;
   if (els.blurValue) els.blurValue.textContent = `${profile.menuBlur}px`;
   if (!els.profileStats) return;
@@ -563,6 +573,14 @@ els.showLabelsToggle?.addEventListener("change", (event) => {
   profile.showMenuLabels = event.target.checked;
   const menu = document.querySelector("#radialMenu");
   if (menu) menu.classList.toggle("show-labels", profile.showMenuLabels);
+  saveProfile();
+});
+els.pulsePreviewToggle?.addEventListener("change", (event) => {
+  profile.pulsePreview = event.target.checked;
+  saveProfile();
+});
+els.pulseFastSnapToggle?.addEventListener("change", (event) => {
+  profile.pulseFastSnap = event.target.checked;
   saveProfile();
 });
 els.blurRange?.addEventListener("input", (event) => {
