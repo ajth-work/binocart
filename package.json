@@ -8,6 +8,7 @@
     "review": "node scripts/serve-static.js 4181",
     "dev:web": "node scripts/serve-static.js 4173",
     "api:receipts": "node scripts/receipt-api.js",
+    "codespace:start": "node scripts/start-codespace-services.js",
     "build:web": "node scripts/build-web.js",
     "cap": "node scripts/run-capacitor.js",
     "cap:sync": "npm run build:web && node scripts/run-capacitor.js sync android",
