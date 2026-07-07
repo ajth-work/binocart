@@ -15,7 +15,12 @@ const els = {
   receiptFile: document.querySelector("#receiptFile"),
   receiptFileName: document.querySelector("#receiptFileName"),
   receiptPreview: document.querySelector("#receiptPreview"),
+  receiptTextInput: document.querySelector("#receiptTextInput"),
+  receiptApiBase: document.querySelector("#receiptApiBase"),
+  parseReceiptOpenAI: document.querySelector("#parseReceiptOpenAI"),
+  parseReceiptText: document.querySelector("#parseReceiptText"),
   parseReceiptDemo: document.querySelector("#parseReceiptDemo"),
+  addReceiptItem: document.querySelector("#addReceiptItem"),
   resetReceiptReview: document.querySelector("#resetReceiptReview"),
   receiptForm: document.querySelector("#receiptForm"),
   receiptStore: document.querySelector("#receiptStore"),
@@ -42,6 +47,8 @@ const els = {
 
 let profile = null;
 let receiptDraft = null;
+let receiptImageDataUrl = "";
+const receiptApiBaseKey = "binocart.receiptApiBase.v1";
 
 function money(value) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value);
@@ -255,6 +262,143 @@ function mockParsedReceipt() {
   };
 }
 
+function parseReceiptDate(text) {
+  const match = text.match(/\b(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})\b/);
+  if (!match) return new Date().toISOString().slice(0, 10);
+  const [, month, day, rawYear] = match;
+  const year = rawYear.length === 2 ? `20${rawYear}` : rawYear;
+  return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+}
+
+function cleanReceiptItemName(value) {
+  return value
+    .replace(/\b(?:qty|quantity|item|total|sale|regular|price|each|ea)\b/gi, " ")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
+function parseReceiptLine(line) {
+  const normalized = line.replace(/\$/g, "").replace(/\s+/g, " ").trim();
+  if (!normalized || /^(subtotal|tax|total|change|cash|card|visa|mastercard|amex|debit|credit)\b/i.test(normalized)) return null;
+
+  const priceMatch = normalized.match(/(-?\d+\.\d{2})(?!.*-?\d+\.\d{2})/);
+  if (!priceMatch) return null;
+
+  const unitPrice = Number(priceMatch[1]);
+  if (!Number.isFinite(unitPrice) || unitPrice <= 0) return null;
+
+  const beforePrice = normalized.slice(0, priceMatch.index).trim();
+  const afterPrice = normalized.slice(priceMatch.index + priceMatch[0].length).trim();
+  const quantityMatch = beforePrice.match(/\b(\d+)\s*(?:x|@)?\s*$/i) || afterPrice.match(/^(?:x\s*)?(\d+)\b/i);
+  const quantity = quantityMatch ? Number(quantityMatch[1]) : 1;
+  const rawName = quantityMatch && beforePrice.endsWith(quantityMatch[0])
+    ? beforePrice.slice(0, -quantityMatch[0].length)
+    : beforePrice;
+  const name = cleanReceiptItemName(rawName);
+
+  if (!name || name.length < 3) return null;
+  return { name, quantity: Number.isFinite(quantity) && quantity > 0 ? quantity : 1, unitPrice };
+}
+
+function parseReceiptText(text) {
+  const lines = String(text || "")
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  const items = lines.map(parseReceiptLine).filter(Boolean);
+  const subtotalLine = lines.find((line) => /^subtotal\b/i.test(line));
+  const taxLine = lines.find((line) => /^tax\b/i.test(line));
+  const totalLine = [...lines].reverse().find((line) => /^total\b/i.test(line));
+  const numberFromLine = (line) => Number(line?.replace(/\$/g, "").match(/-?\d+\.\d{2}/)?.[0] || 0);
+  const itemTotal = items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
+  const storeLine = lines.find((line) => !parseReceiptLine(line) && !/\d{1,2}[/-]\d{1,2}[/-]\d{2,4}/.test(line));
+
+  return {
+    store: storeLine || "Unknown store",
+    location: "Confirm location",
+    date: parseReceiptDate(lines.join("\n")),
+    subtotal: numberFromLine(subtotalLine) || itemTotal,
+    tax: numberFromLine(taxLine),
+    total: numberFromLine(totalLine) || itemTotal + numberFromLine(taxLine),
+    source: "text parser",
+    items
+  };
+}
+
+function defaultReceiptApiBase() {
+  const { protocol, hostname } = window.location;
+  if (hostname && hostname !== "127.0.0.1" && hostname !== "localhost") {
+    return `${protocol}//${hostname}:8787`;
+  }
+  return "http://127.0.0.1:8787";
+}
+
+function receiptApiBase() {
+  const params = new URLSearchParams(window.location.search);
+  const queryBase = params.get("receiptApi") || params.get("apiBase");
+  if (queryBase) {
+    localStorage.setItem(receiptApiBaseKey, queryBase);
+    return queryBase.replace(/\/$/, "");
+  }
+  return (localStorage.getItem(receiptApiBaseKey) || defaultReceiptApiBase()).replace(/\/$/, "");
+}
+
+function updateReceiptApiBaseField() {
+  if (!els.receiptApiBase) return;
+  els.receiptApiBase.value = receiptApiBase();
+}
+
+async function parseReceiptWithOpenAI() {
+  if (!els.parseReceiptOpenAI) return;
+  if (!receiptImageDataUrl) {
+    if (els.receiptApiStatus) els.receiptApiStatus.textContent = "Choose a receipt image before using OpenAI parsing.";
+    return;
+  }
+
+  const previousLabel = els.parseReceiptOpenAI.textContent;
+  els.parseReceiptOpenAI.disabled = true;
+  els.parseReceiptOpenAI.textContent = "Parsing...";
+  if (els.receiptApiStatus) els.receiptApiStatus.textContent = "Sending receipt image to local OpenAI API...";
+
+  try {
+    const response = await fetch(`${receiptApiBase()}/api/receipts/parse`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        imageDataUrl: receiptImageDataUrl,
+        textHint: els.receiptTextInput?.value || "",
+        fileName: els.receiptFile?.files?.[0]?.name || ""
+      })
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Receipt API request failed.");
+    renderReceiptReview(data.receipt);
+    if (els.receiptApiStatus) els.receiptApiStatus.textContent = `Parsed with ${data.receipt.source}. Review before saving.`;
+  } catch (error) {
+    if (els.receiptApiStatus) els.receiptApiStatus.textContent = error.message;
+  } finally {
+    els.parseReceiptOpenAI.disabled = false;
+    els.parseReceiptOpenAI.textContent = previousLabel;
+  }
+}
+
+function receiptItemRow(item = {}, index = 0) {
+  return `
+    <div class="receipt-item-row" data-receipt-item="${index}">
+      <input type="text" value="${escapeHtml(item.name || "")}" aria-label="Receipt item name ${index + 1}" />
+      <input type="number" min="0" step="1" value="${item.quantity || 1}" aria-label="Receipt item quantity ${index + 1}" />
+      <input type="number" min="0" step="0.01" value="${Number(item.unitPrice || 0).toFixed(2)}" aria-label="Receipt item price ${index + 1}" />
+    </div>
+  `;
+}
+
+function addReceiptReviewRow(item = {}) {
+  if (!els.receiptItems) return;
+  const index = els.receiptItems.querySelectorAll("[data-receipt-item]").length;
+  els.receiptItems.insertAdjacentHTML("beforeend", receiptItemRow(item, index));
+  els.receiptForm?.classList.remove("hidden");
+}
+
 function renderReceiptReview(receipt) {
   if (!els.receiptForm) return;
   receiptDraft = receipt;
@@ -265,13 +409,7 @@ function renderReceiptReview(receipt) {
   els.receiptSubtotal.value = Number(receipt.subtotal || 0).toFixed(2);
   els.receiptTax.value = Number(receipt.tax || 0).toFixed(2);
   els.receiptTotal.value = Number(receipt.total || 0).toFixed(2);
-  els.receiptItems.innerHTML = receipt.items.map((item, index) => `
-    <div class="receipt-item-row" data-receipt-item="${index}">
-      <input type="text" value="${escapeHtml(item.name)}" aria-label="Receipt item name ${index + 1}" />
-      <input type="number" min="0" step="1" value="${item.quantity || 1}" aria-label="Receipt item quantity ${index + 1}" />
-      <input type="number" min="0" step="0.01" value="${Number(item.unitPrice || 0).toFixed(2)}" aria-label="Receipt item price ${index + 1}" />
-    </div>
-  `).join("");
+  els.receiptItems.innerHTML = (receipt.items.length ? receipt.items : [{}]).map(receiptItemRow).join("");
 }
 
 function clearReceiptReview() {
@@ -493,6 +631,7 @@ function renderProfile() {
 
 function renderCurrentPage() {
   updateProfileHeader();
+  updateReceiptApiBaseField();
   renderGroups();
   renderHistory();
   renderSaved();
@@ -599,14 +738,30 @@ els.receiptFile?.addEventListener("change", () => {
   const file = els.receiptFile.files?.[0];
   if (!file) return;
   els.receiptFileName.textContent = file.name;
+  receiptImageDataUrl = "";
   if (file.type.startsWith("image/")) {
     const url = URL.createObjectURL(file);
     els.receiptPreview.innerHTML = `<img src="${url}" alt="Uploaded receipt preview" />`;
+    const reader = new FileReader();
+    reader.addEventListener("load", () => {
+      receiptImageDataUrl = String(reader.result || "");
+    });
+    reader.readAsDataURL(file);
   } else {
     els.receiptPreview.innerHTML = `<div class="basket-empty">${file.name} selected. PDF preview can come with backend processing.</div>`;
   }
 });
+els.receiptApiBase?.addEventListener("change", () => {
+  localStorage.setItem(receiptApiBaseKey, els.receiptApiBase.value.trim().replace(/\/$/, ""));
+  updateReceiptApiBaseField();
+});
+els.parseReceiptOpenAI?.addEventListener("click", parseReceiptWithOpenAI);
 els.parseReceiptDemo?.addEventListener("click", () => renderReceiptReview(mockParsedReceipt()));
+els.parseReceiptText?.addEventListener("click", () => {
+  const parsed = parseReceiptText(els.receiptTextInput?.value || "");
+  renderReceiptReview(parsed);
+});
+els.addReceiptItem?.addEventListener("click", () => addReceiptReviewRow());
 els.resetReceiptReview?.addEventListener("click", clearReceiptReview);
 els.receiptForm?.addEventListener("submit", (event) => {
   event.preventDefault();

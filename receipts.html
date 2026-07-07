@@ -35,11 +35,24 @@
       </header>
       <section class="receipt-workspace">
         <article class="receipt-upload-panel">
-          <div class="section-heading"><div><h3>Receipt upload</h3><p class="subtle">Prototype uses demo parser.</p></div></div>
-          <label class="file-drop" for="receiptFile"><span>Upload receipt image</span><small id="receiptFileName">JPG, PNG, or photo</small></label>
-          <input id="receiptFile" class="hidden-file" type="file" accept="image/*,.pdf" />
+          <div class="section-heading"><div><h3>Receipt upload</h3><p class="subtle">Capture the receipt, then parse or enter the rows.</p></div></div>
+          <label class="file-drop" for="receiptFile"><span>Scan or upload receipt</span><small id="receiptFileName">Camera, JPG, PNG, or PDF</small></label>
+          <input id="receiptFile" class="hidden-file" type="file" accept="image/*,.pdf" capture="environment" />
           <div id="receiptPreview" class="receipt-preview"><div class="basket-empty">Receipt preview here.</div></div>
-          <button id="parseReceiptDemo" class="primary-btn" type="button">Parse demo receipt</button>
+          <label class="receipt-text-entry">
+            Receipt text
+            <textarea id="receiptTextInput" rows="8" placeholder="Paste OCR or receipt text here. Example:&#10;Kroger Columbus, OH&#10;07/06/2026&#10;Milk Gallon 1 3.05&#10;Eggs Dozen 1.89"></textarea>
+          </label>
+          <label class="receipt-text-entry">
+            Receipt API URL
+            <input id="receiptApiBase" type="url" placeholder="http://127.0.0.1:8787 or Codespaces forwarded URL" />
+          </label>
+          <div class="basket-actions receipt-intake-actions">
+            <button id="parseReceiptOpenAI" class="primary-btn" type="button">Parse with OpenAI</button>
+            <button id="parseReceiptText" class="primary-btn" type="button">Parse receipt text</button>
+            <button id="parseReceiptDemo" class="ghost-btn" type="button">Use demo receipt</button>
+          </div>
+          <p id="receiptApiStatus" class="subtle receipt-api-status">OpenAI parsing requires the local receipt API.</p>
         </article>
         <form id="receiptForm" class="receipt-review-panel hidden" autocomplete="off">
           <div class="section-heading"><div><h3>Review receipt</h3><p class="subtle">Confirm names and prices.</p></div></div>
@@ -50,6 +63,7 @@
           </div>
           <div class="receipt-items-heading"><span>Item</span><span>Qty</span><span>Price</span></div>
           <div id="receiptItems" class="receipt-items"></div>
+          <button id="addReceiptItem" class="ghost-btn" type="button">Add item row</button>
           <div class="receipt-totals">
             <label>Subtotal<input id="receiptSubtotal" type="number" step="0.01" /></label>
             <label>Tax<input id="receiptTax" type="number" step="0.01" /></label>

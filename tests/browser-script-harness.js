@@ -95,7 +95,11 @@ function createHarness(scriptName, options = {}) {
     setTimeout,
     clearTimeout,
     setInterval,
-    clearInterval
+    clearInterval,
+    FileReader: class {
+      addEventListener() {}
+      readAsDataURL() {}
+    }
   };
 
   context.window = {

@@ -174,7 +174,50 @@ Open the native Android project:
 npm run android:open
 ```
 
-OpenAI/OCR credentials for receipt processing should live on a backend, not in the Android app. See `docs/receipt-processing-api.md` for the planned API contract.
+OpenAI/OCR credentials for receipt processing live in a local backend, not in the browser or Android app. Create a private `.env` file from `.env.example`:
+
+```powershell
+copy .env.example .env
+```
+
+Set `OPENAI_API_KEY`, then start the receipt parser API:
+
+```powershell
+npm run api:receipts
+```
+
+In another terminal, run the static app:
+
+```powershell
+python -m http.server 4173
+```
+
+Open `http://127.0.0.1:4173/receipts.html`, choose a receipt image, and use **Parse with OpenAI**. The parsed rows still pass through the review form before they are saved to local receipt memory and price observations.
+
+### Codespaces receipt testing
+
+Codespaces can run the static app and receipt API when you are away from your local network.
+
+1. Create a Codespace from the GitHub repo.
+2. Add `OPENAI_API_KEY` as a Codespaces secret for the repo.
+3. Open two terminals:
+
+```bash
+cd "Personal Projects/Barcode Scanner"
+npm run api:receipts
+```
+
+```bash
+cd "Personal Projects/Barcode Scanner"
+npm run dev:web
+```
+
+4. In the Codespaces **Ports** panel, make ports `4173` and `8787` public or accessible to your device.
+5. Open the forwarded `4173` URL on your phone.
+6. Copy the forwarded `8787` URL into **Receipts > Receipt API URL**.
+7. Upload a receipt image and tap **Parse with OpenAI**.
+
+You can also open the app with `?receiptApi=<forwarded-8787-url>` to save that API URL automatically.
 
 To build an APK or run on a device, install Android Studio with a current Android SDK and JDK. This project uses a Gradle/Android Gradle Plugin pairing that can run on Android Studio's bundled JDK. On this machine, use:
 

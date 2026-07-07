@@ -46,6 +46,6 @@ http.createServer((request, response) => {
     });
     response.end(data);
   });
-}).listen(port, "127.0.0.1", () => {
+}).listen(port, "0.0.0.0", () => {
   console.log(`BinoCart review server: http://127.0.0.1:${port}/`);
 });

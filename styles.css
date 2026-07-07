@@ -1816,6 +1816,31 @@ input[type="range"]::-webkit-slider-thumb {
   object-fit: contain;
 }
 
+.receipt-text-entry {
+  display: grid;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.receipt-text-entry textarea {
+  width: 100%;
+  min-width: 0;
+  resize: vertical;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--panel-2);
+  color: var(--text);
+  font: inherit;
+  line-height: 1.4;
+}
+
+.receipt-intake-actions {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
 .receipt-fields,
 .receipt-totals {
   display: grid;

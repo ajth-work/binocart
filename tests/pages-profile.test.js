@@ -94,3 +94,30 @@ test("saving a reviewed receipt creates receipt memory and price observations", 
     "Chobani Oatmilk Original"
   ]);
 });
+
+test("pasted receipt text parses into editable receipt memory", () => {
+  const { context, element, profile } = createHarness("pages.js");
+  const parsed = context.parseReceiptText(`
+    Kroger Columbus OH
+    07/06/2026
+    Milk Gallon 1 3.05
+    Eggs Large Dozen 1.89
+    Subtotal 4.94
+    Tax 0.00
+    Total 4.94
+  `);
+
+  context.renderReceiptReview(parsed);
+  element("#receiptItems").querySelectorAll = (selector) => selector === "[data-receipt-item]"
+    ? parsed.items.map((item) => receiptRow(item.name, item.quantity, item.unitPrice))
+    : [];
+  context.saveReceiptFromReview();
+  const stored = profile();
+
+  assert.equal(stored.receipts.length, 1);
+  assert.equal(stored.receipts[0].source, "text parser");
+  assert.equal(stored.receipts[0].date, "2026-07-06");
+  assert.equal(stored.receipts[0].items.length, 2);
+  assert.equal(stored.priceObservations.length, 2);
+  assert.equal(stored.priceObservations[0].store, "Kroger Columbus OH");
+});
