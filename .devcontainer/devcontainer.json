@@ -1,0 +1,23 @@
+{
+  "name": "BinoCart",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:1-22-bookworm",
+  "forwardPorts": [4173, 8787],
+  "portsAttributes": {
+    "4173": {
+      "label": "BinoCart web app",
+      "onAutoForward": "notify"
+    },
+    "8787": {
+      "label": "BinoCart receipt API",
+      "onAutoForward": "notify"
+    }
+  },
+  "postCreateCommand": "npm install",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "github.vscode-github-actions"
+      ]
+    }
+  }
+}

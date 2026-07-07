@@ -142,7 +142,7 @@ test("receipt OpenAI API keeps credentials server-side", () => {
 });
 
 test("Codespaces configuration forwards the web and receipt API ports", () => {
-  const devcontainer = read("../../.devcontainer/devcontainer.json");
+  const devcontainer = read(".devcontainer/devcontainer.json");
   const scripts = JSON.parse(read("package.json")).scripts;
 
   assert.match(devcontainer, /"forwardPorts": \[4173, 8787\]/);

@@ -1,5 +1,5 @@
 {
-  "name": "binocart-static-prototype",
+  "name": "binocart",
   "version": "0.1.0",
   "private": true,
   "description": "BinoCart static prototype packaged for web and Android through Capacitor.",

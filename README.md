@@ -234,12 +234,10 @@ Codespaces can run the static app and receipt API when you are away from your lo
 3. Open two terminals:
 
 ```bash
-cd "Personal Projects/Barcode Scanner"
 npm run api:receipts
 ```
 
 ```bash
-cd "Personal Projects/Barcode Scanner"
 npm run dev:web
 ```
 
@@ -287,11 +285,11 @@ The app will publish at the Pages URL shown by GitHub.
 Current Pages test URL:
 
 ```text
-https://ajth-work.github.io/projects/Personal%20Projects/Barcode%20Scanner/
+https://ajth-work.github.io/binocart/
 ```
 
 Deployment runs can be checked at:
 
 ```text
-https://github.com/ajth-work/projects/actions
+https://github.com/ajth-work/binocart/actions
 ```
