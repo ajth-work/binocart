@@ -53,18 +53,22 @@
             <button id="parseReceiptDemo" class="ghost-btn" type="button">Use demo receipt</button>
           </div>
           <p id="receiptApiStatus" class="subtle receipt-api-status">OpenAI parsing requires the local receipt API.</p>
+          <div id="receiptDebugLog" class="receipt-debug-log hidden" aria-live="polite"></div>
         </article>
         <form id="receiptForm" class="receipt-review-panel hidden" autocomplete="off">
           <div class="section-heading"><div><h3>Review receipt</h3><p class="subtle">Confirm names and prices.</p></div></div>
-          <div class="receipt-fields">
+          <div class="receipt-fields receipt-card-section">
             <label>Store<input id="receiptStore" type="text" /></label>
             <label>Location<input id="receiptLocation" type="text" /></label>
             <label>Date<input id="receiptDate" type="date" /></label>
           </div>
-          <div class="receipt-items-heading"><span>Item</span><span>Qty</span><span>Price</span></div>
+          <div class="receipt-items-heading">
+            <div><span>Parsed line items</span><small>Item, Barcode / UPC, quantity, and price</small></div>
+          </div>
           <div id="receiptItems" class="receipt-items"></div>
           <button id="addReceiptItem" class="ghost-btn" type="button">Add item row</button>
-          <div class="receipt-totals">
+          <div id="receiptReviewSummary" class="receipt-review-summary"></div>
+          <div class="receipt-totals receipt-card-section">
             <label>Subtotal<input id="receiptSubtotal" type="number" step="0.01" /></label>
             <label>Tax<input id="receiptTax" type="number" step="0.01" /></label>
             <label>Total<input id="receiptTotal" type="number" step="0.01" /></label>

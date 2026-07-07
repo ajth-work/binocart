@@ -68,6 +68,14 @@
             <p class="setting-hint">Shortens the delay before the carousel settles after a swipe.</p>
           </div>
           <div class="settings-row">
+            <label class="toggle-switch">
+              <input type="checkbox" id="receiptDebugToggle" />
+              <span class="slider"></span>
+              Receipt parse debug log
+            </label>
+            <p class="setting-hint">Shows receipt image, OpenAI parse, and database save steps on the Receipts page.</p>
+          </div>
+          <div class="settings-row">
             <label for="blurRange" class="setting-label">Menu background blur</label>
             <div class="range-container">
               <input type="range" id="blurRange" min="0" max="20" step="1" value="2" />
@@ -77,6 +85,19 @@
         </div>
       </details>
     </main>
+
+    <div id="receiptDetailModal" class="modal-overlay hidden">
+      <article class="modal-card receipt-detail-modal" role="dialog" aria-modal="true" aria-labelledby="receiptDetailTitle">
+        <header class="modal-header">
+          <div>
+            <p class="eyebrow">Receipt detail</p>
+            <h2 id="receiptDetailTitle">Receipt</h2>
+          </div>
+          <button id="closeReceiptDetail" class="icon-edit-btn" type="button" aria-label="Close receipt detail">x</button>
+        </header>
+        <div id="receiptDetailContent" class="modal-content"></div>
+      </article>
+    </div>
 
     <div id="radialMenu" class="radial-menu">
       <button id="menuToggle" class="fab-toggle" aria-label="Open menu">

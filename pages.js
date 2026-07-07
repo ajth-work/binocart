@@ -17,6 +17,8 @@ const els = {
   receiptPreview: document.querySelector("#receiptPreview"),
   receiptTextInput: document.querySelector("#receiptTextInput"),
   receiptApiBase: document.querySelector("#receiptApiBase"),
+  receiptApiStatus: document.querySelector("#receiptApiStatus"),
+  receiptDebugLog: document.querySelector("#receiptDebugLog"),
   parseReceiptOpenAI: document.querySelector("#parseReceiptOpenAI"),
   parseReceiptText: document.querySelector("#parseReceiptText"),
   parseReceiptDemo: document.querySelector("#parseReceiptDemo"),
@@ -30,14 +32,20 @@ const els = {
   receiptSubtotal: document.querySelector("#receiptSubtotal"),
   receiptTax: document.querySelector("#receiptTax"),
   receiptTotal: document.querySelector("#receiptTotal"),
+  receiptReviewSummary: document.querySelector("#receiptReviewSummary"),
   receiptHistory: document.querySelector("#receiptHistory"),
   receiptHistoryCount: document.querySelector("#receiptHistoryCount"),
+  receiptDetailModal: document.querySelector("#receiptDetailModal"),
+  receiptDetailTitle: document.querySelector("#receiptDetailTitle"),
+  receiptDetailContent: document.querySelector("#receiptDetailContent"),
+  closeReceiptDetail: document.querySelector("#closeReceiptDetail"),
   showLabelsToggle: document.querySelector("#showLabelsToggle"),
   navStyleToggle: document.querySelector("#navStyleToggle"),
   blurRange: document.querySelector("#blurRange"),
   blurValue: document.querySelector("#blurValue"),
   pulsePreviewToggle: document.querySelector("#pulsePreviewToggle"),
   pulseFastSnapToggle: document.querySelector("#pulseFastSnapToggle"),
+  receiptDebugToggle: document.querySelector("#receiptDebugToggle"),
   navPlusAction: document.querySelector("#navPlusAction"),
   actionOverlay: document.querySelector("#actionOverlay"),
   closeActions: document.querySelector("#closeActions"),
@@ -49,6 +57,7 @@ let profile = null;
 let receiptDraft = null;
 let receiptImageDataUrl = "";
 const receiptApiBaseKey = "binocart.receiptApiBase.v1";
+const receiptRequestTimeoutMs = 45000;
 
 function money(value) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value);
@@ -81,12 +90,14 @@ function defaultProfile() {
     archivedGroups: [],
     archivedSaved: [],
     receipts: [],
+    receiptLineItems: [],
     priceObservations: [],
     showMenuLabels: false,
     menuBlur: 2,
     navStyle: "fab",
     pulsePreview: false,
-    pulseFastSnap: false
+    pulseFastSnap: false,
+    receiptDebugLog: false
   };
 }
 
@@ -104,11 +115,13 @@ function loadProfile() {
   profile.archivedGroups = Array.isArray(profile.archivedGroups) ? profile.archivedGroups : [];
   profile.archivedSaved = Array.isArray(profile.archivedSaved) ? profile.archivedSaved : [];
   profile.receipts = Array.isArray(profile.receipts) ? profile.receipts : [];
+  profile.receiptLineItems = Array.isArray(profile.receiptLineItems) ? profile.receiptLineItems : [];
   profile.priceObservations = Array.isArray(profile.priceObservations) ? profile.priceObservations : [];
   profile.showMenuLabels = typeof profile.showMenuLabels === "boolean" ? profile.showMenuLabels : false;
   profile.menuBlur = typeof profile.menuBlur === "number" ? profile.menuBlur : 2;
   profile.pulsePreview = typeof profile.pulsePreview === "boolean" ? profile.pulsePreview : false;
   profile.pulseFastSnap = typeof profile.pulseFastSnap === "boolean" ? profile.pulseFastSnap : false;
+  profile.receiptDebugLog = typeof profile.receiptDebugLog === "boolean" ? profile.receiptDebugLog : false;
   profile.navStyle = "navbar";
   profile.showPlusButton = false;
 
@@ -143,6 +156,7 @@ function updateProfileHeader() {
   if (els.showLabelsToggle) els.showLabelsToggle.checked = profile.showMenuLabels;
   if (els.pulsePreviewToggle) els.pulsePreviewToggle.checked = profile.pulsePreview;
   if (els.pulseFastSnapToggle) els.pulseFastSnapToggle.checked = profile.pulseFastSnap;
+  if (els.receiptDebugToggle) els.receiptDebugToggle.checked = profile.receiptDebugLog;
   if (els.navStyleToggle) els.navStyleToggle.checked = profile.navStyle === "navbar";
   if (els.blurRange) {
     els.blurRange.value = profile.menuBlur;
@@ -255,11 +269,31 @@ function mockParsedReceipt() {
     total: 13.79,
     source: "demo parser",
     items: [
-      { name: "Jif Creamy Peanut Butter", quantity: 1, unitPrice: 2.84 },
-      { name: "Chobani Oatmilk Original", quantity: 1, unitPrice: 3.98 },
-      { name: "Kleenex Trusted Care Tissues", quantity: 1, unitPrice: 5.99 }
+      { name: "Jif Creamy Peanut Butter", barcode: "", quantity: 1, unitPrice: 2.84 },
+      { name: "Chobani Oatmilk Original", barcode: "", quantity: 1, unitPrice: 3.98 },
+      { name: "Kleenex Trusted Care Tissues", barcode: "", quantity: 1, unitPrice: 5.99 }
     ]
   };
+}
+
+function updateReceiptDebugVisibility() {
+  if (!els.receiptDebugLog) return;
+  els.receiptDebugLog.classList.toggle("hidden", !profile.receiptDebugLog);
+  if (profile.receiptDebugLog && !els.receiptDebugLog.innerHTML.trim()) {
+    els.receiptDebugLog.innerHTML = `<div class="receipt-debug-line">Receipt debug log ready.</div>`;
+  }
+}
+
+function logReceiptDebug(message, detail = "") {
+  if (!profile?.receiptDebugLog || !els.receiptDebugLog) return;
+  const now = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  const detailText = detail
+    ? ` ${typeof detail === "string" ? detail : JSON.stringify(detail)}`
+    : "";
+  els.receiptDebugLog.innerHTML += `<div class="receipt-debug-line">[${escapeHtml(now)}] ${escapeHtml(message)}${escapeHtml(detailText)}</div>`;
+  const lines = els.receiptDebugLog.querySelectorAll(".receipt-debug-line");
+  if (lines.length > 40) lines[0].remove();
+  els.receiptDebugLog.scrollTop = els.receiptDebugLog.scrollHeight;
 }
 
 function parseReceiptDate(text) {
@@ -325,6 +359,120 @@ function parseReceiptText(text) {
   };
 }
 
+function dateForReceiptJson(date) {
+  return String(date || new Date().toISOString().slice(0, 10)).replaceAll("-", ".");
+}
+
+function makeSuggestedReceiptFilename(store, date) {
+  const safeStore = String(store || "UnknownStore").replace(/[^A-Za-z0-9]+/g, "_").replace(/^_+|_+$/g, "") || "UnknownStore";
+  return `${safeStore}_[${dateForReceiptJson(date)}] 000000`;
+}
+
+function itemBarcode(item) {
+  return String(
+    item.barcode
+    || item.barcode_number
+    || item.barcodeNumber
+    || item.upc
+    || item.ean
+    || item.sku
+    || item.product_code
+    || item.productCode
+    || item.item_code
+    || item.itemCode
+    || ""
+  ).trim();
+}
+
+function buildCanonicalReceiptJson(receipt) {
+  const existing = receipt.receiptJson || {};
+  const business = existing.business || {};
+  const address = business.address || {};
+  return {
+    gas_station: Boolean(existing.gas_station),
+    handwriting_detected: Boolean(existing.handwriting_detected),
+    business: {
+      brand: business.brand || receipt.store || "",
+      store_id: business.store_id || "",
+      store_name: business.store_name || receipt.store || "",
+      location: business.location || receipt.location || "",
+      full_address: business.full_address || "",
+      address: {
+        street: address.street || "",
+        city: address.city || "",
+        state: address.state || "",
+        zip: address.zip || ""
+      }
+    },
+    date: dateForReceiptJson(receipt.date),
+    gas: {
+      fuel_type: existing.gas?.fuel_type || "",
+      gallons: Number(existing.gas?.gallons || 0),
+      price_per_gallon: Number(existing.gas?.price_per_gallon || 0),
+      total_cost: Number(existing.gas?.total_cost || 0)
+    },
+    items: receipt.items.map((item) => ({
+      name: item.name,
+      barcode: itemBarcode(item),
+      quantity: Number(item.quantity || 1),
+      unit_price: Number(item.unitPrice || item.unit_price || 0)
+    })),
+    subtotal: Number(receipt.subtotal || 0),
+    tax: Number(receipt.tax || 0),
+    total: Number(receipt.total || 0),
+    payment_method: existing.payment_method || "",
+    card_last_four: existing.card_last_four || "",
+    transaction_id: existing.transaction_id || "",
+    misc: existing.misc || "",
+    suggested_filename: existing.suggested_filename || makeSuggestedReceiptFilename(receipt.store, receipt.date)
+  };
+}
+
+function buildReceiptLineItems(receipt) {
+  return receipt.receiptJson.items.map((item, index) => ({
+    id: makeId("receipt-line"),
+    receiptId: receipt.id,
+    lineIndex: index,
+    itemName: item.name,
+    barcode: item.barcode || "",
+    quantity: Number(item.quantity || 1),
+    unitPrice: Number(item.unit_price || 0),
+    store: receipt.receiptJson.business.store_name || receipt.store,
+    brand: receipt.receiptJson.business.brand || "",
+    storeId: receipt.receiptJson.business.store_id || "",
+    location: receipt.receiptJson.business.location || receipt.location,
+    date: receipt.date,
+    source: receipt.source,
+    observedAt: receipt.savedAt
+  }));
+}
+
+async function persistReceiptToDatabase(receipt) {
+  logReceiptDebug("Saving reviewed receipt to database", {
+    store: receipt.store,
+    items: receipt.items.length,
+    api: receiptApiBase()
+  });
+  try {
+    const response = await fetchWithTimeout(`${receiptApiBase()}/api/receipts/save`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ receipt })
+    }, 12000);
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Receipt database save failed.");
+    if (els.receiptApiStatus) {
+      els.receiptApiStatus.textContent = `Saved to receipt database: ${data.database.receiptItemsInserted} line rows.`;
+    }
+    logReceiptDebug("Database save complete", data.database);
+  } catch (error) {
+    if (els.receiptApiStatus) {
+      els.receiptApiStatus.textContent = `Saved locally, but database sync failed: ${error.message}`;
+    }
+    logReceiptDebug("Database save failed", error.message);
+  }
+}
+
 function defaultReceiptApiBase() {
   const { protocol, hostname } = window.location;
   if (hostname && hostname !== "127.0.0.1" && hostname !== "localhost") {
@@ -348,10 +496,51 @@ function updateReceiptApiBaseField() {
   els.receiptApiBase.value = receiptApiBase();
 }
 
+function fetchWithTimeout(url, options = {}, timeoutMs = receiptRequestTimeoutMs) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  return fetch(url, { ...options, signal: controller.signal })
+    .finally(() => clearTimeout(timeout));
+}
+
+function readFileAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.addEventListener("load", () => resolve(String(reader.result || "")));
+    reader.addEventListener("error", () => reject(new Error("Could not read receipt image.")));
+    reader.readAsDataURL(file);
+  });
+}
+
+function compressReceiptImage(dataUrl) {
+  return new Promise((resolve) => {
+    if (typeof Image === "undefined" || !document.createElement) return resolve(dataUrl);
+
+    const image = new Image();
+    image.addEventListener("load", () => {
+      const maxSide = 1600;
+      const scale = Math.min(1, maxSide / Math.max(image.width, image.height));
+      if (scale >= 1) return resolve(dataUrl);
+
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(image.width * scale);
+      canvas.height = Math.round(image.height * scale);
+      const context = canvas.getContext("2d");
+      if (!context) return resolve(dataUrl);
+
+      context.drawImage(image, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL("image/jpeg", 0.82));
+    });
+    image.addEventListener("error", () => resolve(dataUrl));
+    image.src = dataUrl;
+  });
+}
+
 async function parseReceiptWithOpenAI() {
   if (!els.parseReceiptOpenAI) return;
   if (!receiptImageDataUrl) {
     if (els.receiptApiStatus) els.receiptApiStatus.textContent = "Choose a receipt image before using OpenAI parsing.";
+    logReceiptDebug("Parse blocked because no image is ready");
     return;
   }
 
@@ -359,9 +548,28 @@ async function parseReceiptWithOpenAI() {
   els.parseReceiptOpenAI.disabled = true;
   els.parseReceiptOpenAI.textContent = "Parsing...";
   if (els.receiptApiStatus) els.receiptApiStatus.textContent = "Sending receipt image to local OpenAI API...";
+  logReceiptDebug("Starting OpenAI receipt parse", {
+    api: receiptApiBase(),
+    imageChars: receiptImageDataUrl.length,
+    hasTextHint: Boolean(els.receiptTextInput?.value)
+  });
 
   try {
-    const response = await fetch(`${receiptApiBase()}/api/receipts/parse`, {
+    if (els.receiptApiStatus) els.receiptApiStatus.textContent = "Checking receipt API health...";
+    const health = await fetchWithTimeout(`${receiptApiBase()}/api/receipts/health`, { method: "GET" }, 8000);
+    if (!health.ok) throw new Error("Receipt API is reachable but not healthy.");
+    const healthData = await health.json().catch(() => ({}));
+    logReceiptDebug("Receipt API health check passed", {
+      model: healthData.model || "unknown",
+      hasOpenAiKey: Boolean(healthData.hasOpenAiKey),
+      database: healthData.database || "database status unavailable"
+    });
+    if (!healthData.hasOpenAiKey) {
+      throw new Error("Receipt API is running, but its OpenAI API key is not configured on the server.");
+    }
+
+    if (els.receiptApiStatus) els.receiptApiStatus.textContent = "Receipt API ready. Sending image to OpenAI...";
+    const response = await fetchWithTimeout(`${receiptApiBase()}/api/receipts/parse`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -374,8 +582,17 @@ async function parseReceiptWithOpenAI() {
     if (!response.ok) throw new Error(data.error || "Receipt API request failed.");
     renderReceiptReview(data.receipt);
     if (els.receiptApiStatus) els.receiptApiStatus.textContent = `Parsed with ${data.receipt.source}. Review before saving.`;
+    logReceiptDebug("OpenAI parse complete", {
+      source: data.receipt.source,
+      store: data.receipt.store,
+      items: data.receipt.items.length
+    });
   } catch (error) {
-    if (els.receiptApiStatus) els.receiptApiStatus.textContent = error.message;
+    const message = error.name === "AbortError"
+      ? "Receipt parsing timed out. Check the API URL, server log, or try a clearer/smaller image."
+      : error.message;
+    if (els.receiptApiStatus) els.receiptApiStatus.textContent = message;
+    logReceiptDebug("OpenAI parse failed", message);
   } finally {
     els.parseReceiptOpenAI.disabled = false;
     els.parseReceiptOpenAI.textContent = previousLabel;
@@ -385,10 +602,36 @@ async function parseReceiptWithOpenAI() {
 function receiptItemRow(item = {}, index = 0) {
   return `
     <div class="receipt-item-row" data-receipt-item="${index}">
-      <input type="text" value="${escapeHtml(item.name || "")}" aria-label="Receipt item name ${index + 1}" />
-      <input type="number" min="0" step="1" value="${item.quantity || 1}" aria-label="Receipt item quantity ${index + 1}" />
-      <input type="number" min="0" step="0.01" value="${Number(item.unitPrice || 0).toFixed(2)}" aria-label="Receipt item price ${index + 1}" />
+      <div class="receipt-item-row-header">
+        <span>Item ${index + 1}</span>
+        <small>Receipt line</small>
+      </div>
+      <label class="receipt-item-name"><span>Item</span><input type="text" value="${escapeHtml(item.name || "")}" aria-label="Receipt item name ${index + 1}" /></label>
+      <label><span>Barcode / UPC</span><input type="text" inputmode="numeric" value="${escapeHtml(itemBarcode(item))}" aria-label="Receipt item barcode ${index + 1}" placeholder="UPC" /></label>
+      <label><span>Qty</span><input type="number" min="0" step="1" value="${item.quantity || 1}" aria-label="Receipt item quantity ${index + 1}" /></label>
+      <label><span>Price</span><input type="number" min="0" step="0.01" value="${Number(item.unitPrice || 0).toFixed(2)}" aria-label="Receipt item price ${index + 1}" /></label>
     </div>
+  `;
+}
+
+function updateReceiptReviewSummary() {
+  if (!els.receiptReviewSummary) return;
+  const rows = [...(els.receiptItems?.querySelectorAll("[data-receipt-item]") || [])];
+  const parsedLineTotal = rows.reduce((sum, row) => {
+    const inputs = row.querySelectorAll("input");
+    const quantity = Number(inputs[2]?.value || 0);
+    const unitPrice = Number(inputs[3]?.value || 0);
+    return sum + quantity * unitPrice;
+  }, 0);
+  const subtotal = Number(els.receiptSubtotal?.value || 0);
+  const tax = Number(els.receiptTax?.value || 0);
+  const total = Number(els.receiptTotal?.value || 0);
+  els.receiptReviewSummary.innerHTML = `
+    <div><span>Items</span><strong>${rows.length}</strong></div>
+    <div><span>Line total</span><strong>${money(parsedLineTotal)}</strong></div>
+    <div><span>Subtotal</span><strong>${money(subtotal)}</strong></div>
+    <div><span>Tax</span><strong>${money(tax)}</strong></div>
+    <div><span>Total</span><strong>${money(total)}</strong></div>
   `;
 }
 
@@ -397,6 +640,7 @@ function addReceiptReviewRow(item = {}) {
   const index = els.receiptItems.querySelectorAll("[data-receipt-item]").length;
   els.receiptItems.insertAdjacentHTML("beforeend", receiptItemRow(item, index));
   els.receiptForm?.classList.remove("hidden");
+  updateReceiptReviewSummary();
 }
 
 function renderReceiptReview(receipt) {
@@ -410,25 +654,28 @@ function renderReceiptReview(receipt) {
   els.receiptTax.value = Number(receipt.tax || 0).toFixed(2);
   els.receiptTotal.value = Number(receipt.total || 0).toFixed(2);
   els.receiptItems.innerHTML = (receipt.items.length ? receipt.items : [{}]).map(receiptItemRow).join("");
+  updateReceiptReviewSummary();
 }
 
 function clearReceiptReview() {
   receiptDraft = null;
   els.receiptForm?.classList.add("hidden");
   if (els.receiptItems) els.receiptItems.innerHTML = "";
+  if (els.receiptReviewSummary) els.receiptReviewSummary.innerHTML = "";
 }
 
 function readReceiptReview() {
   const items = [...els.receiptItems.querySelectorAll("[data-receipt-item]")].map((row) => {
-    const [nameInput, quantityInput, priceInput] = row.querySelectorAll("input");
+    const [nameInput, barcodeInput, quantityInput, priceInput] = row.querySelectorAll("input");
     return {
       name: nameInput.value.trim(),
+      barcode: barcodeInput.value.trim(),
       quantity: Number(quantityInput.value) || 1,
       unitPrice: Number(priceInput.value) || 0
     };
   }).filter((item) => item.name);
 
-  return {
+  const receipt = {
     id: makeId("receipt"),
     store: els.receiptStore.value.trim() || "Unknown store",
     location: els.receiptLocation.value.trim() || "Unknown location",
@@ -441,28 +688,39 @@ function readReceiptReview() {
     savedAt: new Date().toISOString(),
     items
   };
+  receipt.receiptJson = buildCanonicalReceiptJson({
+    ...receipt,
+    receiptJson: receiptDraft?.receiptJson
+  });
+  return receipt;
 }
 
 function saveReceiptFromReview() {
   const receipt = readReceiptReview();
   if (receipt.items.length === 0) return;
+  const lineItems = buildReceiptLineItems(receipt);
 
   profile.receipts.unshift(receipt);
-  profile.priceObservations.unshift(...receipt.items.map((item) => ({
+  profile.receiptLineItems.unshift(...lineItems);
+  profile.priceObservations.unshift(...lineItems.map((item) => ({
     id: makeId("price"),
     receiptId: receipt.id,
-    itemName: item.name,
-    store: receipt.store,
-    location: receipt.location,
-    date: receipt.date,
+    receiptLineItemId: item.id,
+    itemName: item.itemName,
+    barcode: item.barcode,
+    store: item.store,
+    location: item.location,
+    date: item.date,
     quantity: item.quantity,
     unitPrice: item.unitPrice
   })));
   profile.receipts = profile.receipts.slice(0, 50);
+  profile.receiptLineItems = profile.receiptLineItems.slice(0, 1000);
   profile.priceObservations = profile.priceObservations.slice(0, 500);
   saveProfile();
   clearReceiptReview();
   renderCurrentPage();
+  persistReceiptToDatabase(receipt);
 }
 
 function renderReceiptHistory() {
@@ -477,11 +735,82 @@ function renderReceiptHistory() {
           <p class="subtle">${receipt.items.length} items - ${money(receipt.total)}</p>
         </div>
         <div class="card-actions">
+          <button class="ghost-btn" type="button" data-download-receipt-json="${receipt.id}">JSON</button>
           <a class="ghost-btn" href="profile.html">Profile</a>
         </div>
       </article>
     `).join("")
     : `<div class="basket-empty">Parsed receipts will appear here after review.</div>`;
+}
+
+function downloadReceiptJson(receiptId) {
+  const receipt = profile.receipts.find((item) => item.id === receiptId);
+  if (!receipt?.receiptJson) return;
+
+  const blob = new Blob([JSON.stringify(receipt.receiptJson, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `${receipt.receiptJson.suggested_filename || receipt.id}.json`;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+function renderReceiptDetail(receipt) {
+  const items = Array.isArray(receipt.items) ? receipt.items : [];
+  const lineTotal = items.reduce((sum, item) => sum + Number(item.quantity || 1) * Number(item.unitPrice || item.unit_price || 0), 0);
+  return `
+    <div class="receipt-detail-summary">
+      <div><span>Store</span><strong>${escapeHtml(receipt.store || "Unknown store")}</strong></div>
+      <div><span>Date</span><strong>${escapeHtml(receipt.date || "")}</strong></div>
+      <div><span>Items</span><strong>${items.length}</strong></div>
+      <div><span>Total</span><strong>${money(receipt.total || 0)}</strong></div>
+    </div>
+    <div class="receipt-detail-meta">
+      <p>${escapeHtml(receipt.location || "Unknown location")}</p>
+      <p>${escapeHtml(receipt.source || "manual review")}</p>
+    </div>
+    <div class="receipt-detail-items">
+      ${items.map((item, index) => `
+        <article class="receipt-detail-item">
+          <div>
+            <span>Item ${index + 1}</span>
+            <strong>${escapeHtml(item.name || "Unnamed item")}</strong>
+            <p>${itemBarcode(item) ? `Barcode ${escapeHtml(itemBarcode(item))}` : "No barcode captured"}</p>
+          </div>
+          <div>
+            <span>Qty</span>
+            <strong>${Number(item.quantity || 1)}</strong>
+          </div>
+          <div>
+            <span>Price</span>
+            <strong>${money(Number(item.unitPrice || item.unit_price || 0))}</strong>
+          </div>
+        </article>
+      `).join("")}
+    </div>
+    <div class="receipt-detail-totals">
+      <div><span>Line total</span><strong>${money(lineTotal)}</strong></div>
+      <div><span>Subtotal</span><strong>${money(receipt.subtotal || 0)}</strong></div>
+      <div><span>Tax</span><strong>${money(receipt.tax || 0)}</strong></div>
+      <div><span>Total</span><strong>${money(receipt.total || 0)}</strong></div>
+    </div>
+    <div class="basket-actions">
+      <button class="ghost-btn" type="button" data-download-receipt-json="${receipt.id}">Download JSON</button>
+    </div>
+  `;
+}
+
+function openReceiptDetail(receiptId) {
+  const receipt = profile.receipts.find((item) => item.id === receiptId);
+  if (!receipt || !els.receiptDetailModal || !els.receiptDetailContent) return;
+  if (els.receiptDetailTitle) els.receiptDetailTitle.textContent = `${receipt.store || "Receipt"} - ${receipt.date || ""}`;
+  els.receiptDetailContent.innerHTML = renderReceiptDetail(receipt);
+  els.receiptDetailModal.classList.remove("hidden");
+}
+
+function closeReceiptDetail() {
+  els.receiptDetailModal?.classList.add("hidden");
 }
 
 function productListCard(product, source) {
@@ -556,6 +885,98 @@ function renderSaved() {
     : `<div class="basket-empty">Save products you buy often, then add them back to a list quickly.</div>`;
 }
 
+function groupPriceObservations() {
+  const groups = new Map();
+  profile.priceObservations.forEach((observation) => {
+    if (!observation.itemName || !Number.isFinite(Number(observation.unitPrice))) return;
+    const key = observation.barcode || observation.itemName.toLowerCase();
+    if (!groups.has(key)) {
+      groups.set(key, {
+        key,
+        name: observation.itemName,
+        barcode: observation.barcode || "",
+        observations: []
+      });
+    }
+    groups.get(key).observations.push({
+      date: observation.date || "",
+      store: observation.store || "Unknown store",
+      unitPrice: Number(observation.unitPrice)
+    });
+  });
+  return [...groups.values()]
+    .map((group) => ({
+      ...group,
+      observations: group.observations.sort((a, b) => String(a.date).localeCompare(String(b.date)))
+    }))
+    .sort((a, b) => b.observations.length - a.observations.length || a.name.localeCompare(b.name));
+}
+
+function renderPriceMemoryGraph() {
+  const groups = groupPriceObservations();
+  if (!groups.length) {
+    return `<div class="basket-empty">Save a few parsed receipts to start building price memory.</div>`;
+  }
+
+  const tracked = groups[0];
+  const points = tracked.observations;
+  const prices = points.map((point) => point.unitPrice);
+  const minPrice = Math.min(...prices);
+  const maxPrice = Math.max(...prices);
+  const width = 640;
+  const height = 220;
+  const pad = 28;
+  const span = Math.max(0.01, maxPrice - minPrice);
+  const xStep = points.length > 1 ? (width - pad * 2) / (points.length - 1) : 0;
+  const coords = points.map((point, index) => {
+    const x = points.length > 1 ? pad + index * xStep : width / 2;
+    const y = height - pad - ((point.unitPrice - minPrice) / span) * (height - pad * 2);
+    return { ...point, x, y };
+  });
+  const path = coords.map((point, index) => `${index === 0 ? "M" : "L"} ${point.x.toFixed(1)} ${point.y.toFixed(1)}`).join(" ");
+  const first = points[0];
+  const latest = points[points.length - 1];
+  const delta = latest.unitPrice - first.unitPrice;
+  const deltaLabel = `${delta >= 0 ? "+" : ""}${money(delta)}`;
+
+  return `
+    <article class="price-memory-card">
+      <div class="price-memory-header">
+        <div>
+          <span class="eyebrow">Tracked item</span>
+          <h4>${escapeHtml(tracked.name)}</h4>
+          <p class="subtle">${tracked.barcode ? `Barcode ${escapeHtml(tracked.barcode)} - ` : ""}${points.length} observations</p>
+        </div>
+        <div class="price-memory-delta ${delta > 0 ? "up" : delta < 0 ? "down" : ""}">
+          <span>Since first receipt</span>
+          <strong>${deltaLabel}</strong>
+        </div>
+      </div>
+      <svg class="price-memory-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeHtml(tracked.name)} price graph">
+        <line x1="${pad}" y1="${height - pad}" x2="${width - pad}" y2="${height - pad}" />
+        <line x1="${pad}" y1="${pad}" x2="${pad}" y2="${height - pad}" />
+        ${path ? `<path d="${path}" />` : ""}
+        ${coords.map((point) => `
+          <circle cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" r="6" />
+          <text x="${point.x.toFixed(1)}" y="${Math.max(16, point.y - 12).toFixed(1)}">${money(point.unitPrice)}</text>
+        `).join("")}
+      </svg>
+      <div class="price-memory-foot">
+        <span>${escapeHtml(first.date || "First receipt")} at ${escapeHtml(first.store)}</span>
+        <span>${escapeHtml(latest.date || "Latest receipt")} at ${escapeHtml(latest.store)}</span>
+      </div>
+      <div class="price-memory-items">
+        ${groups.slice(0, 4).map((group) => `
+          <div>
+            <strong>${escapeHtml(group.name)}</strong>
+            <span>${group.observations.length} obs - latest ${money(group.observations[group.observations.length - 1].unitPrice)}</span>
+          </div>
+        `).join("")}
+      </div>
+    </article>
+  `;
+}
+
 function renderProfile() {
   if (els.profileNameInput) els.profileNameInput.value = profile.name;
   if (els.navStyleToggle) els.navStyleToggle.checked = profile.navStyle === "navbar";
@@ -563,11 +984,12 @@ function renderProfile() {
   if (els.showLabelsToggle) els.showLabelsToggle.checked = profile.showMenuLabels;
   if (els.pulsePreviewToggle) els.pulsePreviewToggle.checked = profile.pulsePreview;
   if (els.pulseFastSnapToggle) els.pulseFastSnapToggle.checked = profile.pulseFastSnap;
+  if (els.receiptDebugToggle) els.receiptDebugToggle.checked = profile.receiptDebugLog;
   if (els.blurRange) els.blurRange.value = profile.menuBlur;
   if (els.blurValue) els.blurValue.textContent = `${profile.menuBlur}px`;
   if (!els.profileStats) return;
   const recentReceipts = profile.receipts.slice(0, 5).map((receipt) => `
-    <article class="archive-row">
+    <article class="archive-row receipt-memory-row" role="button" tabindex="0" data-view-receipt="${receipt.id}">
       <div>
         <strong>${receipt.store}</strong>
         <p class="subtle">${receipt.location} - ${receipt.date} - ${receipt.items.length} items</p>
@@ -603,7 +1025,7 @@ function renderProfile() {
     <article class="profile-card">
       <strong>${profile.name}</strong>
       <p class="subtle">Local-only profile. Email sync can come later.</p>
-      <p>${profile.groups.length} list groups - ${profile.history.length} recent scans - ${profile.saved.length} saved products - ${profile.receipts.length} receipts - ${profile.priceObservations.length} price observations</p>
+      <p>${profile.groups.length} list groups - ${profile.history.length} recent scans - ${profile.saved.length} saved products - ${profile.receipts.length} receipts - ${profile.receiptLineItems.length} receipt line rows - ${profile.priceObservations.length} price observations</p>
     </article>
     <section class="archive-section">
       <div class="section-heading">
@@ -611,6 +1033,13 @@ function renderProfile() {
         <span>${profile.receipts.length}</span>
       </div>
       ${recentReceipts || `<div class="basket-empty">Receipt history will appear here after you save reviewed receipts.</div>`}
+    </section>
+    <section class="archive-section">
+      <div class="section-heading">
+        <h3>Price memory graph</h3>
+        <span>${profile.priceObservations.length}</span>
+      </div>
+      ${renderPriceMemoryGraph()}
     </section>
     <section class="archive-section">
       <div class="section-heading">
@@ -632,6 +1061,7 @@ function renderProfile() {
 function renderCurrentPage() {
   updateProfileHeader();
   updateReceiptApiBaseField();
+  updateReceiptDebugVisibility();
   renderGroups();
   renderHistory();
   renderSaved();
@@ -666,6 +1096,26 @@ function handleProfileArchiveAction(event) {
   if (restoreSavedButton) restoreArchivedSaved(restoreSavedButton.dataset.restoreSaved);
   if (deleteGroupButton) deleteArchivedGroup(deleteGroupButton.dataset.deleteArchivedGroup);
   if (deleteSavedButton) deleteArchivedSaved(deleteSavedButton.dataset.deleteArchivedSaved);
+}
+
+function handleReceiptHistoryAction(event) {
+  const downloadButton = event.target.closest("[data-download-receipt-json]");
+  if (downloadButton) downloadReceiptJson(downloadButton.dataset.downloadReceiptJson);
+}
+
+function handleProfileReceiptAction(event) {
+  const receiptButton = event.target.closest("[data-view-receipt]");
+  const downloadButton = event.target.closest("[data-download-receipt-json]");
+  if (downloadButton) {
+    event.stopPropagation();
+    downloadReceiptJson(downloadButton.dataset.downloadReceiptJson);
+    return true;
+  }
+  if (receiptButton) {
+    openReceiptDetail(receiptButton.dataset.viewReceipt);
+    return true;
+  }
+  return false;
 }
 
 function setupRadialMenu() {
@@ -722,6 +1172,12 @@ els.pulseFastSnapToggle?.addEventListener("change", (event) => {
   profile.pulseFastSnap = event.target.checked;
   saveProfile();
 });
+els.receiptDebugToggle?.addEventListener("change", (event) => {
+  profile.receiptDebugLog = event.target.checked;
+  saveProfile();
+  updateReceiptDebugVisibility();
+  logReceiptDebug(event.target.checked ? "Receipt debug log enabled" : "Receipt debug log disabled");
+});
 els.blurRange?.addEventListener("input", (event) => {
   const val = Number(event.target.value);
   profile.menuBlur = val;
@@ -733,22 +1189,40 @@ els.blurRange?.addEventListener("input", (event) => {
 els.historyList?.addEventListener("click", handleProductAction);
 els.savedList?.addEventListener("click", handleProductAction);
 els.groupCards?.addEventListener("click", handleGroupAction);
-els.profileStats?.addEventListener("click", handleProfileArchiveAction);
-els.receiptFile?.addEventListener("change", () => {
+els.profileStats?.addEventListener("click", (event) => {
+  if (!handleProfileReceiptAction(event)) handleProfileArchiveAction(event);
+});
+els.profileStats?.addEventListener("keydown", (event) => {
+  if ((event.key === "Enter" || event.key === " ") && handleProfileReceiptAction(event)) event.preventDefault();
+});
+els.closeReceiptDetail?.addEventListener("click", closeReceiptDetail);
+els.receiptDetailModal?.addEventListener("click", (event) => {
+  if (event.target === els.receiptDetailModal) closeReceiptDetail();
+});
+els.receiptDetailContent?.addEventListener("click", handleReceiptHistoryAction);
+els.receiptHistory?.addEventListener("click", handleReceiptHistoryAction);
+els.receiptFile?.addEventListener("change", async () => {
   const file = els.receiptFile.files?.[0];
   if (!file) return;
   els.receiptFileName.textContent = file.name;
   receiptImageDataUrl = "";
+  logReceiptDebug("Receipt file selected", { name: file.name, type: file.type || "unknown", bytes: file.size || 0 });
   if (file.type.startsWith("image/")) {
     const url = URL.createObjectURL(file);
     els.receiptPreview.innerHTML = `<img src="${url}" alt="Uploaded receipt preview" />`;
-    const reader = new FileReader();
-    reader.addEventListener("load", () => {
-      receiptImageDataUrl = String(reader.result || "");
-    });
-    reader.readAsDataURL(file);
+    if (els.receiptApiStatus) els.receiptApiStatus.textContent = "Preparing receipt image...";
+    try {
+      receiptImageDataUrl = await compressReceiptImage(await readFileAsDataUrl(file));
+      if (els.receiptApiStatus) els.receiptApiStatus.textContent = "Receipt image ready. Tap Parse with OpenAI.";
+      logReceiptDebug("Receipt image prepared for parsing", { imageChars: receiptImageDataUrl.length });
+    } catch (error) {
+      if (els.receiptApiStatus) els.receiptApiStatus.textContent = error.message;
+      logReceiptDebug("Receipt image preparation failed", error.message);
+    }
   } else {
     els.receiptPreview.innerHTML = `<div class="basket-empty">${file.name} selected. PDF preview can come with backend processing.</div>`;
+    if (els.receiptApiStatus) els.receiptApiStatus.textContent = "Receipt parsing currently needs an image file.";
+    logReceiptDebug("Receipt file is not an image; OpenAI image parsing skipped");
   }
 });
 els.receiptApiBase?.addEventListener("change", () => {
@@ -758,8 +1232,10 @@ els.receiptApiBase?.addEventListener("change", () => {
 els.parseReceiptOpenAI?.addEventListener("click", parseReceiptWithOpenAI);
 els.parseReceiptDemo?.addEventListener("click", () => renderReceiptReview(mockParsedReceipt()));
 els.parseReceiptText?.addEventListener("click", () => {
+  logReceiptDebug("Parsing pasted receipt text", { chars: (els.receiptTextInput?.value || "").length });
   const parsed = parseReceiptText(els.receiptTextInput?.value || "");
   renderReceiptReview(parsed);
+  logReceiptDebug("Pasted receipt text parsed", { store: parsed.store, items: parsed.items.length });
 });
 els.addReceiptItem?.addEventListener("click", () => addReceiptReviewRow());
 els.resetReceiptReview?.addEventListener("click", clearReceiptReview);
@@ -767,3 +1243,4 @@ els.receiptForm?.addEventListener("submit", (event) => {
   event.preventDefault();
   saveReceiptFromReview();
 });
+els.receiptForm?.addEventListener("input", updateReceiptReviewSummary);

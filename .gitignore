@@ -5,6 +5,7 @@ Thumbs.db
 .env.*
 !.env.example
 node_modules/
+data/
 www/
 android/.gradle/
 android/local.properties

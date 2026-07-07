@@ -129,9 +129,10 @@ function createHarness(scriptName, options = {}) {
   };
 }
 
-function receiptRow(name, quantity, unitPrice) {
+function receiptRow(name, quantity, unitPrice, barcode = "") {
   const inputs = [
     createElement({ value: name }),
+    createElement({ value: barcode }),
     createElement({ value: String(quantity) }),
     createElement({ value: String(unitPrice) })
   ];

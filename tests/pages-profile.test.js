@@ -10,9 +10,11 @@ test("new profiles include archive and receipt collections", () => {
   assert.equal(profile.archivedGroups.length, 0);
   assert.equal(profile.archivedSaved.length, 0);
   assert.equal(profile.receipts.length, 0);
+  assert.equal(profile.receiptLineItems.length, 0);
   assert.equal(profile.priceObservations.length, 0);
   assert.equal(profile.pulsePreview, false);
   assert.equal(profile.pulseFastSnap, false);
+  assert.equal(profile.receiptDebugLog, false);
 });
 
 test("archive, restore, and delete list workflow persists to localStorage", () => {
@@ -78,7 +80,7 @@ test("saving a reviewed receipt creates receipt memory and price observations", 
   element("#receiptTotal").value = "7.02";
   element("#receiptItems").querySelectorAll = (selector) => selector === "[data-receipt-item]"
     ? [
-      receiptRow("Jif Creamy Peanut Butter", 1, 2.84),
+      receiptRow("Jif Creamy Peanut Butter", 1, 2.84, "051500255162"),
       receiptRow("Chobani Oatmilk Original", 1, 3.98)
     ]
     : [];
@@ -88,7 +90,15 @@ test("saving a reviewed receipt creates receipt memory and price observations", 
 
   assert.equal(stored.receipts.length, 1);
   assert.equal(stored.receipts[0].store, "Kroger");
+  assert.equal(stored.receipts[0].receiptJson.business.store_name, "Kroger");
+  assert.equal(stored.receipts[0].receiptJson.items[0].barcode, "051500255162");
+  assert.equal(stored.receipts[0].receiptJson.items[0].unit_price, 2.84);
+  assert.equal(stored.receiptLineItems.length, 2);
+  assert.equal(stored.receiptLineItems[0].receiptId, stored.receipts[0].id);
+  assert.equal(stored.receiptLineItems[0].itemName, "Jif Creamy Peanut Butter");
+  assert.equal(stored.receiptLineItems[0].barcode, "051500255162");
   assert.equal(stored.priceObservations.length, 2);
+  assert.equal(stored.priceObservations[0].barcode, "051500255162");
   assert.deepEqual([...stored.priceObservations.map((item) => item.itemName)], [
     "Jif Creamy Peanut Butter",
     "Chobani Oatmilk Original"
@@ -118,6 +128,76 @@ test("pasted receipt text parses into editable receipt memory", () => {
   assert.equal(stored.receipts[0].source, "text parser");
   assert.equal(stored.receipts[0].date, "2026-07-06");
   assert.equal(stored.receipts[0].items.length, 2);
+  assert.equal(stored.receipts[0].receiptJson.suggested_filename, "Kroger_Columbus_OH_[2026.07.06] 000000");
+  assert.equal(stored.receiptLineItems.length, 2);
   assert.equal(stored.priceObservations.length, 2);
   assert.equal(stored.priceObservations[0].store, "Kroger Columbus OH");
+});
+
+test("price memory graph renders saved receipt observations", () => {
+  const seed = {
+    id: "profile-test",
+    name: "My profile",
+    activeGroupId: "group-test",
+    groups: [{ id: "group-test", name: "Weekly staples", items: [] }],
+    history: [],
+    saved: [],
+    archivedGroups: [],
+    archivedSaved: [],
+    receipts: [],
+    receiptLineItems: [],
+    priceObservations: [
+      { itemName: "Milk Gallon", barcode: "011110038342", unitPrice: 3.49, date: "2026-07-01", store: "Kroger" },
+      { itemName: "Milk Gallon", barcode: "011110038342", unitPrice: 3.19, date: "2026-07-08", store: "Aldi" }
+    ]
+  };
+  const { context } = createHarness("pages.js", {
+    storage: { "binocart.profile.v1": JSON.stringify(seed) }
+  });
+
+  const html = context.renderPriceMemoryGraph();
+  assert.match(html, /Milk Gallon/);
+  assert.match(html, /Barcode 011110038342/);
+  assert.match(html, /price-memory-chart/);
+});
+
+test("receipt barcode aliases populate canonical receipt rows", () => {
+  const { context } = createHarness("pages.js");
+  const receipt = {
+    store: "Aldi",
+    location: "Columbus, OH",
+    date: "2026-07-07",
+    subtotal: 2.99,
+    tax: 0,
+    total: 2.99,
+    items: [
+      { name: "Parmesan Cheese", barcode_number: "041498124578", quantity: 1, unitPrice: 2.99 }
+    ]
+  };
+
+  const json = context.buildCanonicalReceiptJson(receipt);
+  assert.equal(json.items[0].barcode, "041498124578");
+  assert.match(context.receiptItemRow(receipt.items[0], 0), /041498124578/);
+});
+
+test("receipt detail renders saved receipt rows and totals", () => {
+  const { context } = createHarness("pages.js");
+  const html = context.renderReceiptDetail({
+    id: "receipt-1",
+    store: "Meijer #104",
+    location: "Columbus, OH",
+    date: "2026-01-24",
+    subtotal: 12.99,
+    tax: 1.48,
+    total: 14.47,
+    source: "openai:gpt-5.4-mini",
+    items: [
+      { name: "Parmesan Cheese", barcode: "041498124578", quantity: 1, unitPrice: 2.99 }
+    ]
+  });
+
+  assert.match(html, /Meijer #104/);
+  assert.match(html, /Parmesan Cheese/);
+  assert.match(html, /Barcode 041498124578/);
+  assert.match(html, /Download JSON/);
 });

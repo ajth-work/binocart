@@ -189,10 +189,30 @@ npm run api:receipts
 In another terminal, run the static app:
 
 ```powershell
-python -m http.server 4173
+npm run dev:web
 ```
 
-Open `http://127.0.0.1:4173/receipts.html`, choose a receipt image, and use **Parse with OpenAI**. The parsed rows still pass through the review form before they are saved to local receipt memory and price observations.
+Open `http://127.0.0.1:4173/receipts.html`, choose a receipt image, and use **Parse with OpenAI**. The parsed rows still pass through the review form before they are saved.
+
+Saving a reviewed receipt writes to both browser profile memory and the local SQLite receipt database:
+
+```text
+data/binocart-receipts.sqlite
+```
+
+The database contains:
+
+- `receipts` - one row per receipt JSON artifact.
+- `receipt_items` - one row per purchased line item.
+- `price_observations` - one market-price observation per receipt item.
+
+The receipt API also exposes:
+
+```text
+GET /api/receipts/health
+GET /api/receipts/export
+POST /api/receipts/save
+```
 
 ### Codespaces receipt testing
 
