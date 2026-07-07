@@ -32,7 +32,9 @@ The current build is a static web app intended for GitHub Pages hosting, local L
 - Local Market Pulse is a 20-item synthetic market feed grouped into four swipeable pages of 6/6/6/2 items.
 - Pulse cards support quick add/remove controls, active cart totals, and store summary pills.
 - Pulse card detail views show local store options and are the first prototype surface for future product/commodity intelligence pages.
-- Receipt upload/review is prototyped with local receipt memory and price observations.
+- Receipt upload/review supports OpenAI parsing through a local backend, editable receipt cards, barcode/UPC capture, local receipt memory, and price observations.
+- Saved receipt memory cards on Profile open a receipt detail modal with item rows, barcode values, subtotals, tax, total, and JSON download.
+- Profile includes a first-pass price memory graph built from saved receipt observations.
 - The app can be hosted securely through GitHub Pages so phone camera permissions can work over HTTPS.
 
 ## Current Product Direction
@@ -130,6 +132,7 @@ Profile > Advanced UI Controls contains prototype-only settings stored in localS
 
 - `Show next Pulse preview`: when off, the Local Market Pulse carousel settles with only the active Pulse card set visible.
 - `Fast Pulse snap`: shortens the delay before Pulse settles after a swipe.
+- `Receipt parse debug log`: shows receipt image prep, API health, OpenAI parse, and database save steps on the Receipts page.
 - Menu label and blur controls remain for testing the older radial menu.
 
 ## Phone Camera Note
@@ -203,8 +206,8 @@ data/binocart-receipts.sqlite
 The database contains:
 
 - `receipts` - one row per receipt JSON artifact.
-- `receipt_items` - one row per purchased line item.
-- `price_observations` - one market-price observation per receipt item.
+- `receipt_items` - one row per purchased line item, including visible barcode/UPC/SKU codes when present.
+- `price_observations` - one market-price observation per receipt item, used by the Profile price memory graph.
 
 The receipt API also exposes:
 
@@ -213,6 +216,14 @@ GET /api/receipts/health
 GET /api/receipts/export
 POST /api/receipts/save
 ```
+
+Current receipt parsing uses JSON requests to the local API:
+
+```text
+POST /api/receipts/parse
+```
+
+with `imageDataUrl`, optional `textHint`, and optional `fileName`. The browser compresses receipt images before sending them. OpenAI credentials stay on the receipt API server and are never bundled into the web app or Android app.
 
 ### Codespaces receipt testing
 

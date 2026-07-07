@@ -43,6 +43,18 @@ Future Explore pages should support:
 
 The long-term navigation model is not flat search. It should connect market area, stores, categories/commodities, brands, products, SKUs, receipts, favorites, alerts, recipes, and cart optimization.
 
+## Receipt Memory Relationship
+
+Receipt processing is now the first working source of user-generated price memory. Saved receipts create line-item observations with store, date, quantity, price, and visible barcode/UPC/SKU codes when available.
+
+Profile currently shows:
+
+- receipt memory cards that open receipt detail modals
+- reviewed receipt JSON downloads
+- a first-pass price memory graph grouped by barcode when available, otherwise item name
+
+This should evolve into Explore history for commodities and products. For example, an Eggs page should eventually combine Pulse signals, scanned product records, receipt observations, store comparisons, and confidence/freshness indicators into one explainable intelligence view.
+
 ## Interaction Notes
 
 The Local Market Pulse carousel is tuned from Profile > Advanced UI Controls:
