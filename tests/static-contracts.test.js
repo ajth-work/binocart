@@ -49,6 +49,20 @@ test("pages load the expected static script", () => {
   }
 });
 
+test("scan page exposes camera controls and scan actions target scanner startup", () => {
+  const scan = read("scan.html");
+  assert.match(scan, /id="startCamera"/);
+  assert.match(scan, /id="stopCamera"/);
+  assert.match(scan, /id="demoScan"/);
+
+  for (const page of pages) {
+    const html = read(page);
+    assert.doesNotMatch(html, /href="index\.html\?scan=true"/, `${page} should not route scanner startup to Intel`);
+  }
+
+  assert.match(read("index.html"), /href="scan\.html\?scan=true" class="primary-btn scan-hero-btn"/);
+});
+
 test("brand manifest points to files that exist", () => {
   const manifest = read("assets/brand/manifest.csv").trim().split(/\r?\n/).slice(1);
   assert.ok(manifest.length > 20, "expected a populated brand asset manifest");

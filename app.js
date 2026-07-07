@@ -887,12 +887,18 @@ function cameraTrack() {
 }
 
 function updateTorchButton() {
+  if (!els.toggleTorch) return;
   els.toggleTorch.disabled = !stream;
   els.toggleTorch.classList.toggle("active", torchOn);
   els.toggleTorch.textContent = torchOn ? "Lit" : "Light";
   els.toggleTorch.title = stream
     ? "Toggle flashlight"
     : "Start camera before using flashlight";
+}
+
+function updateCameraButtons() {
+  if (els.startCamera) els.startCamera.disabled = Boolean(stream);
+  if (els.stopCamera) els.stopCamera.disabled = !stream;
 }
 
 function setupTorchControl() {
@@ -1606,6 +1612,11 @@ async function lookup(query) {
 }
 
 async function startCamera() {
+  if (stream) {
+    updateCameraButtons();
+    return;
+  }
+
   clearCameraNotice();
   els.scannerSection?.classList.remove("hidden");
 
@@ -1617,6 +1628,7 @@ async function startCamera() {
     els.loadingText.textContent = "Camera access is blocked because this phone is opening the app over plain HTTP.";
     setMode("loading");
     els.progressBar.style.width = "100%";
+    updateCameraButtons();
     window.setTimeout(() => setMode(currentProduct ? "result" : "empty"), 2200);
     return;
   }
@@ -1631,6 +1643,7 @@ async function startCamera() {
     scanning = true;
     els.scanLine.classList.add("active");
     setupTorchControl();
+    updateCameraButtons();
 
     if (!("BarcodeDetector" in window)) {
       showCameraNotice(
@@ -1650,6 +1663,7 @@ async function startCamera() {
     els.loadingText.textContent = message;
     setMode("loading");
     els.progressBar.style.width = "100%";
+    updateCameraButtons();
     window.setTimeout(() => setMode(currentProduct ? "result" : "empty"), 1800);
   }
 }
@@ -1684,6 +1698,7 @@ function stopCamera() {
     stream.getTracks().forEach((track) => track.stop());
     stream = null;
   }
+  updateCameraButtons();
 }
 
 els.startCamera?.addEventListener("click", startCamera);
@@ -2035,6 +2050,7 @@ renderProfile();
 const initialLookup = initialParams.get("lookup");
 if (document.body?.dataset.page === "scan") {
   updateTorchButton();
+  updateCameraButtons();
   setMode("empty");
   if (initialLookup) lookup(initialLookup);
   if (initialParams.get("scan") === "true") startCamera();
