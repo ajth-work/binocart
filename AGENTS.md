@@ -69,3 +69,26 @@ Use short imperative commit messages, such as `Add receipt memory database and r
 - Local: `http://127.0.0.1:4173/index.html`
 - GitHub Pages: `https://ajth-work.github.io/binocart/`
 - Actions: `https://github.com/ajth-work/binocart/actions`
+
+## Codex Agent Configuration: Token Optimization Protocol
+
+### 1. System Communication Rules
+
+- Be terse: output code or commands directly. Avoid conversational filler, intros, summaries, or pleasantries.
+- Diffs only: never rewrite a whole file to show a change. Provide only precise git diffs or targeted code blocks showing the line modifications.
+- No code explanations: do not explain how the code works unless explicitly requested by the user.
+
+### 2. Command & Tool Execution Rules
+
+- Limit tool output: when running tests or build commands, aggressively truncate the output and capture only the relevant parts.
+- Command overrides:
+  - Prefer targeted test flags such as `--test-name-pattern` when possible.
+  - Instead of `npm test`, prefer `npm test -- --test-name-pattern="..."` for focused runs or `node --test <file>` when a specific test file is relevant.
+  - Instead of broad directory listings, search for specific files, symbols, or patterns.
+  - In PowerShell, avoid Unix-only examples such as `head -n 30`; use PowerShell-native truncation when needed.
+
+### 3. Context & Codebase Scanning Rules
+
+- Strict inclusion: only read files directly related to the active task. Do not scan adjacent folders or broad modules out of curiosity.
+- Use structural index: prioritize targeted file search and symbol/pattern lookup over reading raw source files sequentially.
+- Stop on error: if a terminal command returns a massive wall of text, stop and ask the user for guidance rather than ingesting the entire log.
