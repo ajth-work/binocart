@@ -92,3 +92,7 @@ Use short imperative commit messages, such as `Add receipt memory database and r
 - Strict inclusion: only read files directly related to the active task. Do not scan adjacent folders or broad modules out of curiosity.
 - Use structural index: prioritize targeted file search and symbol/pattern lookup over reading raw source files sequentially.
 - Stop on error: if a terminal command returns a massive wall of text, stop and ask the user for guidance rather than ingesting the entire log.
+
+## Codex Skill
+
+The local Codex workflow skill is documented in `docs/codex-skill.md`. Use it as the source of truth for recreating or updating the personal skill at `C:\Users\Andrew-John\.codex\skills\binocart\SKILL.md`.
