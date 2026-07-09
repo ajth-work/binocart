@@ -7,6 +7,18 @@ const els = {
   profileNameInput: document.querySelector("#profileNameInput"),
   profileForm: document.querySelector("#profileForm"),
   profileStats: document.querySelector("#profileStats"),
+  supabaseConfigForm: document.querySelector("#supabaseConfigForm"),
+  supabaseUrlInput: document.querySelector("#supabaseUrlInput"),
+  supabaseAnonKeyInput: document.querySelector("#supabaseAnonKeyInput"),
+  clearSupabaseConfig: document.querySelector("#clearSupabaseConfig"),
+  authEmailForm: document.querySelector("#authEmailForm"),
+  authEmailInput: document.querySelector("#authEmailInput"),
+  authEmailSubmit: document.querySelector("#authEmailSubmit"),
+  authModePill: document.querySelector("#authModePill"),
+  authSummary: document.querySelector("#authSummary"),
+  authStatusMessage: document.querySelector("#authStatusMessage"),
+  refreshAuthSession: document.querySelector("#refreshAuthSession"),
+  signOutButton: document.querySelector("#signOutButton"),
   groupCards: document.querySelector("#groupCards"),
   newGroupQuick: document.querySelector("#newGroupQuick"),
   historyList: document.querySelector("#historyList"),
@@ -58,6 +70,7 @@ let receiptDraft = null;
 let receiptImageDataUrl = "";
 const receiptApiBaseKey = "binocart.receiptApiBase.v1";
 const receiptRequestTimeoutMs = 45000;
+let authUiStatus = '';
 
 function money(value) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value);
@@ -135,6 +148,57 @@ function loadProfile() {
 
 function saveProfile() {
   localStorage.setItem(profileKey, JSON.stringify(profile));
+}
+
+function authState() {
+  return window.BinoCartAuth?.getState?.() || {
+    authAvailable: Boolean(window.supabase?.createClient),
+    configured: false,
+    ready: true,
+    session: null,
+    user: null,
+    error: ""
+  };
+}
+
+function renderAuthPanel() {
+  if (els.supabaseUrlInput) els.supabaseUrlInput.value = window.BinoCartAuth?.getConfig?.().url || "";
+  if (els.supabaseAnonKeyInput) els.supabaseAnonKeyInput.value = window.BinoCartAuth?.getConfig?.().anonKey || "";
+  if (!els.authSummary) return;
+
+  const state = authState();
+  const hasUser = Boolean(state.user?.email);
+  const isConfigured = Boolean(state.configured);
+
+  if (els.authModePill) {
+    els.authModePill.className = "auth-pill";
+    if (hasUser) {
+      els.authModePill.textContent = "Signed in";
+      els.authModePill.classList.add("success");
+    } else if (isConfigured) {
+      els.authModePill.textContent = "Guest sync-ready";
+      els.authModePill.classList.add("warning");
+    } else {
+      els.authModePill.textContent = "Guest";
+    }
+  }
+
+  if (hasUser) {
+    els.authSummary.textContent = `Signed in as ${state.user.email}. Guest mode is no longer your only path.`;
+  } else if (!state.authAvailable) {
+    els.authSummary.textContent = "Guest mode is active. Supabase client loading is unavailable right now.";
+  } else if (!isConfigured) {
+    els.authSummary.textContent = "Guest mode is active on this device. Add your Supabase URL and anon key to enable email sign-in.";
+  } else if (!state.ready) {
+    els.authSummary.textContent = "Supabase is configured. Checking your saved session now.";
+  } else {
+    els.authSummary.textContent = "Supabase is configured. Send a magic link when you are ready to sign in.";
+  }
+
+  if (els.authEmailSubmit) els.authEmailSubmit.disabled = !state.authAvailable || !isConfigured;
+  if (els.signOutButton) els.signOutButton.disabled = !hasUser;
+  if (els.refreshAuthSession) els.refreshAuthSession.disabled = !state.authAvailable || !isConfigured;
+  if (els.authStatusMessage) els.authStatusMessage.textContent = authUiStatus || state.error || "";
 }
 
 function hasPriceProfile(product) {
@@ -978,6 +1042,7 @@ function renderPriceMemoryGraph() {
 }
 
 function renderProfile() {
+  renderAuthPanel();
   if (els.profileNameInput) els.profileNameInput.value = profile.name;
   if (els.navStyleToggle) els.navStyleToggle.checked = profile.navStyle === "navbar";
   if (els.plusButtonToggle) els.plusButtonToggle.checked = false;
@@ -1024,7 +1089,7 @@ function renderProfile() {
   els.profileStats.innerHTML = `
     <article class="profile-card">
       <strong>${profile.name}</strong>
-      <p class="subtle">Local-only profile. Email sync can come later.</p>
+      <p class="subtle">${authState().user?.email ? `Signed in as ${authState().user.email}. Core Supabase sync is now enabled for Phase 1 groundwork.` : `Guest profile on this device. Supabase sign-in is optional while sync is being phased in.`}</p>
       <p>${profile.groups.length} list groups - ${profile.history.length} recent scans - ${profile.saved.length} saved products - ${profile.receipts.length} receipts - ${profile.receiptLineItems.length} receipt line rows - ${profile.priceObservations.length} price observations</p>
     </article>
     <section class="archive-section">
@@ -1139,6 +1204,9 @@ function setupRadialMenu() {
 
 loadProfile();
 setupRadialMenu();
+window.addEventListener?.('binocart-auth-change', () => {
+  renderCurrentPage();
+});
 renderCurrentPage();
 
 els.newGroupQuick?.addEventListener("click", () => createGroup());
@@ -1151,6 +1219,63 @@ els.profileForm?.addEventListener("submit", (event) => {
   event.preventDefault();
   profile.name = els.profileNameInput.value.trim() || "My profile";
   saveProfile();
+  renderCurrentPage();
+});
+els.supabaseConfigForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  authUiStatus = "Saving Supabase config...";
+  renderAuthPanel();
+  try {
+    await window.BinoCartAuth?.setConfig?.(els.supabaseUrlInput?.value, els.supabaseAnonKeyInput?.value);
+    authUiStatus = "Supabase config saved.";
+  } catch (error) {
+    authUiStatus = error?.message || "Could not save Supabase config.";
+  }
+  renderCurrentPage();
+});
+els.clearSupabaseConfig?.addEventListener("click", async () => {
+  authUiStatus = "Clearing Supabase config...";
+  renderAuthPanel();
+  try {
+    await window.BinoCartAuth?.clearConfig?.();
+    authUiStatus = "Supabase config cleared. Guest mode remains available.";
+  } catch (error) {
+    authUiStatus = error?.message || "Could not clear Supabase config.";
+  }
+  renderCurrentPage();
+});
+els.authEmailForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  authUiStatus = "Sending magic link...";
+  renderAuthPanel();
+  try {
+    const result = await window.BinoCartAuth?.signInWithOtp?.(els.authEmailInput?.value || "");
+    authUiStatus = `Magic link sent to ${result?.email || els.authEmailInput?.value || "your email"}.`;
+  } catch (error) {
+    authUiStatus = error?.message || "Could not send magic link.";
+  }
+  renderAuthPanel();
+});
+els.refreshAuthSession?.addEventListener("click", async () => {
+  authUiStatus = "Refreshing Supabase session...";
+  renderAuthPanel();
+  try {
+    await window.BinoCartAuth?.init?.();
+    authUiStatus = authState().user?.email ? `Session refreshed for ${authState().user.email}.` : "No saved session found. Guest mode is still active.";
+  } catch (error) {
+    authUiStatus = error?.message || "Could not refresh session.";
+  }
+  renderCurrentPage();
+});
+els.signOutButton?.addEventListener("click", async () => {
+  authUiStatus = "Signing out...";
+  renderAuthPanel();
+  try {
+    await window.BinoCartAuth?.signOut?.();
+    authUiStatus = "Signed out. Guest mode is still available on this device.";
+  } catch (error) {
+    authUiStatus = error?.message || "Could not sign out.";
+  }
   renderCurrentPage();
 });
 els.navStyleToggle?.addEventListener("change", (event) => {
@@ -1244,3 +1369,5 @@ els.receiptForm?.addEventListener("submit", (event) => {
   saveReceiptFromReview();
 });
 els.receiptForm?.addEventListener("input", updateReceiptReviewSummary);
+
+

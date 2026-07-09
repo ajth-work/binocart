@@ -1594,7 +1594,7 @@ h3 {
 }
 
 .dev-summary::after {
-  content: "↓";
+  content: "???";
   font-size: 1.2rem;
   transition: transform 0.2s ease;
 }
@@ -2968,4 +2968,51 @@ input[type="range"]::-webkit-slider-thumb {
   .card-actions {
     justify-content: start;
   }
+}
+
+.auth-panel {
+  display: grid;
+  gap: var(--space-md);
+  padding: var(--space-lg);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.auth-form {
+  gap: var(--space-sm);
+}
+
+.auth-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+
+.auth-actions-compact {
+  margin-top: calc(var(--space-sm) * -1);
+}
+
+.auth-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: rgba(26, 115, 232, 0.12);
+  color: var(--blue);
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.auth-pill.success {
+  background: rgba(16, 185, 129, 0.14);
+  color: var(--green-dark);
+}
+
+.auth-pill.warning {
+  background: rgba(249, 171, 0, 0.16);
+  color: #8a5d00;
 }

@@ -92,13 +92,13 @@
     <div id="breakdownModal" class="modal-overlay hidden">
       <div class="modal-card">
         <header class="modal-header">
-          <div class="modal-title-group"><span id="modalIcon" class="modal-hero-icon">🥚</span><div><h2 id="modalTitle">Breakdown</h2><p id="modalSubtitle" class="subtle">Local price analysis</p></div></div>
-          <button id="closeModal" class="icon-btn">✕</button>
+          <div class="modal-title-group"><span id="modalIcon" class="modal-hero-icon">????</span><div><h2 id="modalTitle">Breakdown</h2><p id="modalSubtitle" class="subtle">Local price analysis</p></div></div>
+          <button id="closeModal" class="icon-btn">???</button>
         </header>
         <div class="modal-content">
           <div id="breakdownSummary" class="breakdown-summary"></div>
           <div id="storeDrilldown" class="store-drilldown hidden">
-            <div class="drilldown-header"><button id="backToSummary" class="text-btn">← Back</button><h3 id="drilldownStoreName"></h3></div>
+            <div class="drilldown-header"><button id="backToSummary" class="text-btn">??? Back</button><h3 id="drilldownStoreName"></h3></div>
             <div id="drilldownList" class="breakdown-list"></div>
           </div>
         </div>
@@ -160,9 +160,12 @@
         <a href="scan.html?scan=true" class="action-btn"><div class="action-icon-circle"><svg viewBox="0 0 24 24" width="32" height="32"><path d="M3 7V5a2 2 0 0 1 2-2h2 M17 3h2a2 2 0 0 1 2 2v2 M21 17v2a2 2 0 0 1-2 2h-2 M7 21H5a2 2 0 0 1-2-2v-2 M7 12h10" stroke-width="2.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span>Barcode Scan</span></a>
         <a href="receipts.html" class="action-btn"><div class="action-icon-circle"><svg viewBox="0 0 24 24" width="32" height="32"><path d="M4 2v18l2-1 2 1 2-1 2 1 2-1 2 1 2-1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z M9 7h6M9 11h6M9 15h4" stroke-width="2.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span>Receipt Scan</span></a>
       </div>
-      <button class="close-actions-btn" id="closeActions">✕</button>
+      <button class="close-actions-btn" id="closeActions">???</button>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="auth.js?v=20260707-supabase-phase1"></script>
     <script src="app.js?v=20260702-receipts"></script>
   </body>
 </html>
+

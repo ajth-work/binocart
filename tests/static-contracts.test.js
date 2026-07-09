@@ -169,3 +169,24 @@ test("raw brand uploads stay isolated from usable app assets", () => {
   assert.ok(fs.existsSync(path.join(root, "assets/brand/icons/app/app-icon-green-1024.png")));
   assert.ok(fs.existsSync(path.join(root, "assets/brand/logos/horizontal/logo-primary-horizontal.png")));
 });
+
+test("profile page exposes Supabase auth setup controls", () => {
+  const profile = read("profile.html");
+  const pages = read("pages.js");
+  const auth = read("auth.js");
+
+  assert.match(profile, /<script src="https:\/\/cdn\.jsdelivr\.net\/npm\/@supabase\/supabase-js@2"><\/script>/);
+  assert.match(profile, /<script src="auth\.js\?v=/);
+  assert.match(profile, /id="supabaseConfigForm"/);
+  assert.match(profile, /id="supabaseUrlInput"/);
+  assert.match(profile, /id="supabaseAnonKeyInput"/);
+  assert.match(profile, /id="authEmailForm"/);
+  assert.match(profile, /id="authEmailInput"/);
+  assert.match(profile, /id="signOutButton"/);
+  assert.match(pages, /function authState\(\)/);
+  assert.match(pages, /function renderAuthPanel\(\)/);
+  assert.match(pages, /Magic link sent/);
+  assert.match(auth, /signInWithOtp/);
+  assert.match(auth, /createClient/);
+  assert.match(auth, /binocart\.supabase\.url\.v1/);
+});

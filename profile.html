@@ -40,6 +40,37 @@
           <button type="submit">Save</button>
         </div>
       </form>
+            <section class="auth-panel">
+        <div class="section-heading"><h3>Account sync</h3><span id="authModePill" class="auth-pill">Guest</span></div>
+        <p id="authSummary" class="subtle">Guest mode is active on this device.</p>
+        <form id="supabaseConfigForm" class="profile-form auth-form" autocomplete="off">
+          <label for="supabaseUrlInput">Supabase project URL</label>
+          <div class="lookup-row">
+            <input id="supabaseUrlInput" type="url" placeholder="https://your-project.supabase.co" />
+          </div>
+          <label for="supabaseAnonKeyInput">Supabase anon key</label>
+          <div class="lookup-row">
+            <input id="supabaseAnonKeyInput" type="text" placeholder="eyJhbGciOi..." />
+          </div>
+          <div class="auth-actions">
+            <button type="submit">Save Supabase config</button>
+            <button id="clearSupabaseConfig" class="ghost-btn" type="button">Clear config</button>
+          </div>
+          <p class="setting-hint">The anon key is safe for frontend use. Guest mode still works when Supabase is not configured.</p>
+        </form>
+        <form id="authEmailForm" class="profile-form auth-form" autocomplete="off">
+          <label for="authEmailInput">Email sign-in</label>
+          <div class="lookup-row">
+            <input id="authEmailInput" type="email" placeholder="you@example.com" />
+            <button id="authEmailSubmit" type="submit">Send magic link</button>
+          </div>
+        </form>
+        <div class="auth-actions auth-actions-compact">
+          <button id="refreshAuthSession" class="ghost-btn" type="button">Refresh session</button>
+          <button id="signOutButton" class="ghost-btn" type="button">Sign out</button>
+        </div>
+        <p id="authStatusMessage" class="subtle"></p>
+      </section>
       <div id="profileStats" class="profile-stats"></div>
       <details class="dev-settings">
         <summary class="dev-summary">Advanced UI Controls</summary>
@@ -163,9 +194,15 @@
           <span>Receipt Scan</span>
         </a>
       </div>
-      <button class="close-actions-btn" id="closeActions">✕</button>
+      <button class="close-actions-btn" id="closeActions">???</button>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="auth.js?v=20260707-supabase-phase1"></script>
     <script src="pages.js?v=20260702-receipts"></script>
   </body>
 </html>
+
+
+
+
